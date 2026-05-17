@@ -317,6 +317,9 @@ class AddressController extends Controller
      * Supports formats:
      * - SomeWhere: @370 Rue 3.2, @123 Rue 5.A
      * - Normal: 645 Rue de la Joie, 123 Avenue Kennedy
+     *
+     * If a SomeWhere address format is used and the street exists but no
+     * address is registered, calculates and returns the GPS coordinates.
      */
     public function search(Request $request): JsonResponse
     {
@@ -331,13 +334,20 @@ class AddressController extends Controller
         // Parse the query to determine format
         $searchResult = $this->parseAndSearch($query, $limit);
 
-        return $this->success([
+        $response = [
             'query' => $query,
             'format' => $searchResult['format'],
             'parsed' => $searchResult['parsed'],
             'results' => $this->formatAddresses($searchResult['addresses']),
             'count' => $searchResult['addresses']->count(),
-        ]);
+        ];
+
+        // If we have a calculated address (street known but no registered address)
+        if (isset($searchResult['calculated'])) {
+            $response['calculated'] = $searchResult['calculated'];
+        }
+
+        return $this->success($response);
     }
 
     /**
@@ -361,22 +371,26 @@ class AddressController extends Controller
 
     /**
      * Search by SomeWhere format (@370 Rue 3.2)
+     * If no registered address found but street exists, calculates GPS coordinates
      */
     protected function searchSwFormat(string $query, int $limit): array
     {
-        // Remove @ prefix
-        $swAddress = ltrim($query, '@');
+        // Parse the query using StreetService
+        $parsed = $this->streetService->parseSwAddressQuery($query);
 
-        // Parse SW address: "370 Rue 3.2" → number=370, code=3.2
-        $parsed = [];
-        if (preg_match('/^(\d+)\s+(?:Rue|Ave|Avenue|Blvd|Boulevard)?\s*(\d+\.[A-Z0-9]+)$/i', $swAddress, $matches)) {
-            $parsed = [
-                'streetNumber' => $matches[1],
-                'streetCode' => $matches[2],
-            ];
+        // Fallback parsing if service returns null
+        if (!$parsed) {
+            $swAddress = ltrim($query, '@');
+            if (preg_match('/^(\d+)\s+(?:Rue|Ave|Avenue|Blvd|Boulevard)?\s*(\d+\.[A-Z0-9]+)$/i', $swAddress, $matches)) {
+                $parsed = [
+                    'streetNumber' => (int) $matches[1],
+                    'streetCode' => Street::formatCodeToPadded($matches[2]),
+                ];
+            }
         }
 
         // Search by sw_address (exact or partial match)
+        $swAddress = ltrim($query, '@');
         $addresses = Address::with('street')
             ->where(function ($q) use ($swAddress, $query) {
                 $q->where('sw_address', 'LIKE', "%{$swAddress}%")
@@ -387,9 +401,11 @@ class AddressController extends Controller
 
         // If no results and we have parsed data, search by street code
         if ($addresses->isEmpty() && !empty($parsed['streetCode'])) {
+            // Also search with padded code format
             $addresses = Address::with('street')
                 ->whereHas('street', function ($q) use ($parsed) {
-                    $q->where('code', $parsed['streetCode']);
+                    $q->where('code', $parsed['streetCode'])
+                      ->orWhere('code', 'LIKE', '%.' . ltrim(explode('.', $parsed['streetCode'])[1] ?? '', '0') . '%');
                 })
                 ->where(function ($q) use ($parsed) {
                     if (!empty($parsed['streetNumber'])) {
@@ -400,10 +416,78 @@ class AddressController extends Controller
                 ->get();
         }
 
-        return [
+        $result = [
             'format' => 'somewhere',
-            'parsed' => $parsed,
+            'parsed' => $parsed ?? [],
             'addresses' => $addresses,
+        ];
+
+        // If no registered addresses found but we have valid parsed data,
+        // try to find the street and calculate GPS coordinates
+        if ($addresses->isEmpty() && $parsed && !empty($parsed['streetCode']) && !empty($parsed['streetNumber'])) {
+            $calculatedAddress = $this->calculateAddressFromParsed($parsed);
+            if ($calculatedAddress) {
+                $result['calculated'] = $calculatedAddress;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calculate address details from parsed SW address components
+     * Returns null if street not found
+     */
+    protected function calculateAddressFromParsed(array $parsed): ?array
+    {
+        $streetCode = $parsed['streetCode'];
+        $streetNumber = $parsed['streetNumber'];
+
+        // Find the street by code (try both formats)
+        $street = Street::where('code', $streetCode)->first();
+
+        // Try without leading zeros if not found
+        if (!$street && str_contains($streetCode, '.')) {
+            $parts = explode('.', $streetCode);
+            $unpadded = $parts[0] . '.' . ltrim($parts[1], '0');
+            if ($unpadded !== $streetCode) {
+                $street = Street::where('code', $unpadded)->first();
+            }
+        }
+
+        if (!$street) {
+            return null;
+        }
+
+        // Calculate GPS coordinates from street and house number
+        $coordinates = $this->streetService->calculateCoordinatesFromNumber($street, $streetNumber);
+
+        if (!$coordinates) {
+            return null;
+        }
+
+        // Generate the SW address
+        $swAddress = $this->streetService->generateSwAddress($street, $streetNumber);
+
+        return [
+            'swAddress' => $swAddress,
+            'streetNumber' => $streetNumber,
+            'distanceOnStreet' => $coordinates['distanceOnStreet'],
+            'streetSide' => $coordinates['streetSide'],
+            'coordinates' => [
+                'latitude' => $coordinates['latitude'],
+                'longitude' => $coordinates['longitude'],
+            ],
+            'street' => [
+                'id' => $street->id,
+                'osmId' => $street->osm_id,
+                'code' => $street->code,
+                'displayName' => $street->display_name,
+                'communeName' => $street->commune_name,
+                'communeNumber' => $street->commune_number,
+            ],
+            'isCalculated' => true,
+            'message' => 'Adresse calculée - aucune adresse enregistrée trouvée à cette position',
         ];
     }
 

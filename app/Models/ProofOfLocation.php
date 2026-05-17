@@ -16,9 +16,12 @@ class ProofOfLocation extends Model
         'user_id',
         'address_id',
         'payment_id',
+        'document_type',
         'document_number',
         'file_path',
         'qr_code_token',
+        'verification_code',
+        'price',
         'status',
         'issued_at',
         'expires_at',
@@ -29,6 +32,10 @@ class ProofOfLocation extends Model
         'qr_scan_count',
         'last_scanned_at',
     ];
+
+    // Document types
+    public const TYPE_LOCATION_PLAN = 'location_plan';
+    public const TYPE_PROOF_OF_RESIDENCE = 'proof_of_residence';
 
     protected function casts(): array
     {
@@ -51,14 +58,84 @@ class ProofOfLocation extends Model
             if (empty($proof->qr_code_token)) {
                 $proof->qr_code_token = Str::random(64);
             }
+            if (empty($proof->verification_code)) {
+                $proof->verification_code = self::generateVerificationCode();
+            }
+            if (empty($proof->document_type)) {
+                $proof->document_type = self::TYPE_LOCATION_PLAN;
+            }
             if (empty($proof->issued_at)) {
                 $proof->issued_at = now();
             }
             if (empty($proof->expires_at)) {
-                $months = (int) config('app.proof_of_location_validity_months', 3);
+                $months = (int) config('documents.validity_months', 3);
                 $proof->expires_at = now()->addMonths($months);
             }
+            if (empty($proof->price)) {
+                $proof->price = self::getPrice($proof->document_type);
+            }
         });
+    }
+
+    /**
+     * Generate verification code: SW-XXXX-XXXX-XXXX
+     */
+    public static function generateVerificationCode(): string
+    {
+        return sprintf(
+            'SW-%s-%s-%s',
+            strtoupper(Str::random(4)),
+            strtoupper(Str::random(4)),
+            strtoupper(Str::random(4))
+        );
+    }
+
+    /**
+     * Get price for document type
+     */
+    public static function getPrice(string $documentType): int
+    {
+        return match ($documentType) {
+            self::TYPE_LOCATION_PLAN => (int) config('documents.prices.location_plan', 2000),
+            self::TYPE_PROOF_OF_RESIDENCE => (int) config('documents.prices.proof_of_residence', 3000),
+            default => 0,
+        };
+    }
+
+    /**
+     * Check if this is a location plan
+     */
+    public function isLocationPlan(): bool
+    {
+        return $this->document_type === self::TYPE_LOCATION_PLAN;
+    }
+
+    /**
+     * Check if this is a proof of residence
+     */
+    public function isProofOfResidence(): bool
+    {
+        return $this->document_type === self::TYPE_PROOF_OF_RESIDENCE;
+    }
+
+    /**
+     * Get document type label
+     */
+    public function getDocumentTypeLabelAttribute(): string
+    {
+        return match ($this->document_type) {
+            self::TYPE_LOCATION_PLAN => 'Plan de Localisation',
+            self::TYPE_PROOF_OF_RESIDENCE => 'Attestation de Résidence',
+            default => 'Document',
+        };
+    }
+
+    /**
+     * Get verification URL
+     */
+    public function getVerificationUrl(): string
+    {
+        return config('app.url') . '/verify/' . $this->verification_code;
     }
 
     public function user(): BelongsTo
@@ -132,13 +209,44 @@ class ProofOfLocation extends Model
         ];
     }
 
-    public static function generateDocumentNumber(User $user, Address $address): string
+    public static function generateDocumentNumber(User $user, Address $address, ?string $documentType = null): string
     {
+        $prefix = match ($documentType) {
+            self::TYPE_PROOF_OF_RESIDENCE => 'SW-RES',
+            self::TYPE_LOCATION_PLAN => 'SW-LOC',
+            default => 'SW-DOC',
+        };
+
         return sprintf(
-            'SW-POL-%d-%d-%s',
+            '%s-%d-%d-%s',
+            $prefix,
             $user->id,
             $address->id,
             strtoupper(substr(md5(now()->timestamp . $user->id), 0, 8))
         );
+    }
+
+    /**
+     * Scope to filter by document type
+     */
+    public function scopeOfType($query, string $type)
+    {
+        return $query->where('document_type', $type);
+    }
+
+    /**
+     * Scope for location plans only
+     */
+    public function scopeLocationPlans($query)
+    {
+        return $query->where('document_type', self::TYPE_LOCATION_PLAN);
+    }
+
+    /**
+     * Scope for proof of residence only
+     */
+    public function scopeProofsOfResidence($query)
+    {
+        return $query->where('document_type', self::TYPE_PROOF_OF_RESIDENCE);
     }
 }

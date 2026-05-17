@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Address;
 use App\Models\Payment;
+use App\Models\ProofOfLocation;
 use App\Services\FapshiService;
 use App\Services\InvoiceService;
 use App\Services\ProofOfLocationService;
@@ -26,20 +27,27 @@ class PaymentController extends Controller
     public function getConfig(): JsonResponse
     {
         return $this->success([
-            'proofOfLocationPrice' => (int) config('services.fapshi.proof_of_location_price', 1000),
+            'prices' => [
+                'location_plan' => (int) config('documents.prices.location_plan', 2000),
+                'proof_of_residence' => (int) config('documents.prices.proof_of_residence', 3000),
+            ],
+            'proofOfLocationPrice' => (int) config('documents.prices.location_plan', 2000), // Backward compatibility
             'currency' => 'XAF',
             'paymentMethods' => ['mobile_money', 'orange_money'],
             'isSandbox' => str_starts_with(config('services.fapshi.api_key', ''), 'FAK_TEST_'),
+            'validityMonths' => (int) config('documents.validity_months', 3),
         ], 'Payment configuration');
     }
 
     /**
-     * Initiate payment for proof of location (hosted checkout)
+     * Initiate payment for document (hosted checkout)
+     * Supports both location_plan and proof_of_residence
      */
-    public function initiateProofOfLocationPayment(Request $request): JsonResponse
+    public function initiateDocumentPayment(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'addressId' => 'required|exists:addresses,id',
+            'documentType' => 'required|in:location_plan,proof_of_residence',
             'redirectUrl' => 'required|url',
         ]);
 
@@ -49,34 +57,47 @@ class PaymentController extends Controller
 
         $address = Address::find($request->addressId);
         $user = auth()->user();
+        $documentType = $request->documentType;
 
-        // Verify ownership
-        if ($address->user_id !== $user->id) {
+        // Verify ownership or domiciliation for proof_of_residence
+        $hasAccess = $address->user_id === $user->id;
+
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE && !$hasAccess) {
+            // Check if user has approved domiciliation
+            $hasAccess = $address->domiciliations()
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->exists();
+        }
+
+        if (!$hasAccess) {
             return $this->error('Unauthorized', 403);
         }
 
-        // Verify address is approved
-        if ($address->verification_status !== 'approved') {
-            return $this->error('Address must be verified before purchasing proof of location', 400);
+        // Verify address is approved (only for proof_of_residence)
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE && $address->verification_status !== 'approved') {
+            return $this->error('Address must be verified before purchasing proof of residence', 400);
         }
 
-        // Check if user already has active proof for this address
+        // Check if user already has active document for this address of this type
         $existingProof = $user->proofOfLocations()
             ->where('address_id', $address->id)
+            ->where('document_type', $documentType)
             ->where('status', 'active')
             ->where('expires_at', '>', now())
             ->first();
 
         if ($existingProof) {
-            return $this->error('You already have an active proof of location for this address', 400, [
-                'existingProof' => $this->proofService->formatProofForResponse($existingProof),
+            $typeLabel = $existingProof->document_type_label;
+            return $this->error("You already have an active {$typeLabel} for this address", 400, [
+                'existingDocument' => $this->proofService->formatProofForResponse($existingProof),
             ]);
         }
 
-        // Check for pending payment
+        // Check for pending payment of same type
         $pendingPayment = Payment::where('user_id', $user->id)
             ->where('address_id', $address->id)
-            ->where('type', 'proof_of_location')
+            ->where('type', $documentType)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->first();
@@ -88,15 +109,17 @@ class PaymentController extends Controller
                 'paymentLink' => $pendingPayment->payment_link,
                 'amount' => $pendingPayment->amount,
                 'currency' => $pendingPayment->currency,
+                'documentType' => $documentType,
                 'status' => 'pending',
                 'expiresAt' => $pendingPayment->expires_at?->toISOString(),
             ], 'Existing pending payment found');
         }
 
         // Create new payment
-        $payment = $this->fapshiService->createProofOfLocationPayment(
+        $payment = $this->fapshiService->createDocumentPayment(
             $user,
             $address,
+            $documentType,
             $request->redirectUrl
         );
 
@@ -110,9 +133,21 @@ class PaymentController extends Controller
             'paymentLink' => $payment->payment_link,
             'amount' => $payment->amount,
             'currency' => $payment->currency,
+            'documentType' => $documentType,
             'status' => $payment->status,
             'expiresAt' => $payment->expires_at?->toISOString(),
         ], 'Payment initiated');
+    }
+
+    /**
+     * Initiate payment for proof of location (hosted checkout)
+     * @deprecated Use initiateDocumentPayment instead
+     */
+    public function initiateProofOfLocationPayment(Request $request): JsonResponse
+    {
+        // Add document type and forward to new method
+        $request->merge(['documentType' => ProofOfLocation::TYPE_LOCATION_PLAN]);
+        return $this->initiateDocumentPayment($request);
     }
 
     /**
@@ -122,6 +157,7 @@ class PaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'addressId' => 'required|exists:addresses,id',
+            'documentType' => 'nullable|in:location_plan,proof_of_residence',
             'phone' => 'required|string',
         ]);
 
@@ -131,21 +167,32 @@ class PaymentController extends Controller
 
         $address = Address::find($request->addressId);
         $user = auth()->user();
+        $documentType = $request->documentType ?? ProofOfLocation::TYPE_LOCATION_PLAN;
 
-        // Verify ownership
-        if ($address->user_id !== $user->id) {
+        // Verify ownership or domiciliation for proof_of_residence
+        $hasAccess = $address->user_id === $user->id;
+
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE && !$hasAccess) {
+            $hasAccess = $address->domiciliations()
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->exists();
+        }
+
+        if (!$hasAccess) {
             return $this->error('Unauthorized', 403);
         }
 
-        // Verify address is approved
-        if ($address->verification_status !== 'approved') {
-            return $this->error('Address must be verified before purchasing proof of location', 400);
+        // Verify address is approved (only for proof_of_residence)
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE && $address->verification_status !== 'approved') {
+            return $this->error('Address must be verified before purchasing proof of residence', 400);
         }
 
         // Create direct payment
-        $payment = $this->fapshiService->createDirectProofOfLocationPayment(
+        $payment = $this->fapshiService->createDirectDocumentPayment(
             $user,
             $address,
+            $documentType,
             $request->phone
         );
 
@@ -158,6 +205,7 @@ class PaymentController extends Controller
             'transactionId' => $payment->transaction_id,
             'amount' => $payment->amount,
             'currency' => $payment->currency,
+            'documentType' => $documentType,
             'status' => $payment->status,
             'message' => 'Please confirm the payment on your phone',
         ], 'Direct payment initiated');
@@ -212,11 +260,12 @@ class PaymentController extends Controller
             'createdAt' => $payment->created_at->toISOString(),
         ];
 
-        // If successful and proof of location type, include proof data
-        if ($payment->isSuccessful() && $payment->type === 'proof_of_location') {
+        // If successful and document type, include document data
+        if ($payment->isSuccessful() && in_array($payment->type, [ProofOfLocation::TYPE_LOCATION_PLAN, ProofOfLocation::TYPE_PROOF_OF_RESIDENCE, 'proof_of_location'])) {
             $proof = $payment->proofOfLocation;
             if ($proof) {
-                $response['proofOfLocation'] = $this->proofService->formatProofForResponse($proof);
+                $response['document'] = $this->proofService->formatProofForResponse($proof);
+                $response['proofOfLocation'] = $response['document']; // Backward compatibility
             }
         }
 
@@ -267,8 +316,8 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Webhook processed'], 200);
         }
 
-        // If payment is now successful, generate proof of location
-        if ($payment->isSuccessful() && $payment->type === 'proof_of_location') {
+        // If payment is now successful, generate document
+        if ($payment->isSuccessful() && in_array($payment->type, [ProofOfLocation::TYPE_LOCATION_PLAN, ProofOfLocation::TYPE_PROOF_OF_RESIDENCE, 'proof_of_location'])) {
             $this->processSuccessfulPayment($payment);
         }
 
@@ -276,18 +325,30 @@ class PaymentController extends Controller
     }
 
     /**
-     * Process successful payment (generate proof, invoice, etc.)
+     * Process successful payment (generate document, invoice, receipt, etc.)
      */
     protected function processSuccessfulPayment(Payment $payment): void
     {
         try {
-            // Generate proof of location
-            if ($payment->type === 'proof_of_location' && !$payment->proofOfLocation) {
-                $this->proofService->generateAfterPayment($payment);
+            // Generate document based on payment type
+            $documentTypes = [
+                ProofOfLocation::TYPE_LOCATION_PLAN,
+                ProofOfLocation::TYPE_PROOF_OF_RESIDENCE,
+                'proof_of_location', // Legacy type
+            ];
+
+            if (in_array($payment->type, $documentTypes) && !$payment->proofOfLocation) {
+                // Map legacy type to new type
+                $documentType = $payment->type === 'proof_of_location'
+                    ? ProofOfLocation::TYPE_LOCATION_PLAN
+                    : $payment->type;
+
+                $this->proofService->generateAfterPayment($payment, $documentType);
             }
         } catch (\Exception $e) {
             Log::error('Failed to process successful payment', [
                 'payment_id' => $payment->id,
+                'type' => $payment->type,
                 'error' => $e->getMessage(),
             ]);
         }

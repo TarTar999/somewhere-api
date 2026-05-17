@@ -144,19 +144,21 @@ class FapshiService
     }
 
     /**
-     * Create a payment for proof of location
+     * Create a payment for document (location_plan or proof_of_residence)
      */
-    public function createProofOfLocationPayment(
+    public function createDocumentPayment(
         User $user,
         Address $address,
+        string $documentType,
         string $redirectUrl
     ): Payment {
-        $amount = (int) config('services.fapshi.proof_of_location_price', 1000);
+        $amount = $this->getDocumentPrice($documentType);
+        $label = $this->getDocumentLabel($documentType);
 
         $payment = Payment::create([
             'user_id' => $user->id,
             'address_id' => $address->id,
-            'type' => 'proof_of_location',
+            'type' => $documentType,
             'amount' => $amount,
             'currency' => 'XAF',
             'status' => 'pending',
@@ -170,7 +172,7 @@ class FapshiService
                 redirectUrl: $redirectUrl,
                 userId: (string) $user->id,
                 externalId: $payment->external_id,
-                message: "Proof of Location - {$address->sw_address}"
+                message: "{$label} - {$address->sw_address}"
             );
 
             if (isset($response['transId'])) {
@@ -186,6 +188,7 @@ class FapshiService
             Log::error('Fapshi payment creation failed', [
                 'error' => $e->getMessage(),
                 'payment_id' => $payment->id,
+                'document_type' => $documentType,
             ]);
             $payment->markAsFailed($e->getMessage());
         }
@@ -194,19 +197,21 @@ class FapshiService
     }
 
     /**
-     * Create a direct payment for proof of location (Mobile Money)
+     * Create a direct payment for document (Mobile Money)
      */
-    public function createDirectProofOfLocationPayment(
+    public function createDirectDocumentPayment(
         User $user,
         Address $address,
+        string $documentType,
         string $phone
     ): Payment {
-        $amount = (int) config('services.fapshi.proof_of_location_price', 1000);
+        $amount = $this->getDocumentPrice($documentType);
+        $label = $this->getDocumentLabel($documentType);
 
         $payment = Payment::create([
             'user_id' => $user->id,
             'address_id' => $address->id,
-            'type' => 'proof_of_location',
+            'type' => $documentType,
             'amount' => $amount,
             'currency' => 'XAF',
             'status' => 'pending',
@@ -221,7 +226,7 @@ class FapshiService
                 phone: $phone,
                 externalId: $payment->external_id,
                 userId: (string) $user->id,
-                message: "Proof of Location - {$address->sw_address}"
+                message: "{$label} - {$address->sw_address}"
             );
 
             if (isset($response['transId'])) {
@@ -236,11 +241,60 @@ class FapshiService
             Log::error('Fapshi direct payment creation failed', [
                 'error' => $e->getMessage(),
                 'payment_id' => $payment->id,
+                'document_type' => $documentType,
             ]);
             $payment->markAsFailed($e->getMessage());
         }
 
         return $payment->fresh();
+    }
+
+    /**
+     * Create a payment for proof of location
+     * @deprecated Use createDocumentPayment instead
+     */
+    public function createProofOfLocationPayment(
+        User $user,
+        Address $address,
+        string $redirectUrl
+    ): Payment {
+        return $this->createDocumentPayment($user, $address, 'location_plan', $redirectUrl);
+    }
+
+    /**
+     * Create a direct payment for proof of location (Mobile Money)
+     * @deprecated Use createDirectDocumentPayment instead
+     */
+    public function createDirectProofOfLocationPayment(
+        User $user,
+        Address $address,
+        string $phone
+    ): Payment {
+        return $this->createDirectDocumentPayment($user, $address, 'location_plan', $phone);
+    }
+
+    /**
+     * Get document price based on type
+     */
+    protected function getDocumentPrice(string $documentType): int
+    {
+        return match ($documentType) {
+            'location_plan' => (int) config('documents.prices.location_plan', 2000),
+            'proof_of_residence' => (int) config('documents.prices.proof_of_residence', 3000),
+            default => (int) config('documents.prices.location_plan', 2000),
+        };
+    }
+
+    /**
+     * Get document label for payment message
+     */
+    protected function getDocumentLabel(string $documentType): string
+    {
+        return match ($documentType) {
+            'location_plan' => 'Plan de Localisation',
+            'proof_of_residence' => 'Attestation de Residence',
+            default => 'Document',
+        };
     }
 
     /**

@@ -42,6 +42,9 @@ class Street extends Model
 
     /**
      * Generate street code based on commune number and street rank
+     * Format: {commune_number}.{hexRank padded to 4 chars}
+     * Example: commune 3, rank 2 -> "3.0002"
+     * Example: commune 3, rank 255 -> "3.00FF"
      */
     public function generateCode(): string
     {
@@ -50,10 +53,28 @@ class Street extends Model
             ->where('id', '<=', $this->id)
             ->count();
 
-        // Convert rank to hexadecimal (uppercase)
-        $hexRank = strtoupper(dechex($rank));
+        // Convert rank to hexadecimal (uppercase) and pad to 4 characters
+        $hexRank = strtoupper(str_pad(dechex($rank), 4, '0', STR_PAD_LEFT));
 
         return "{$this->commune_number}.{$hexRank}";
+    }
+
+    /**
+     * Format an existing code to the new padded format
+     * Converts "3.2" to "3.0002", "3.FF" to "3.00FF"
+     */
+    public static function formatCodeToPadded(string $code): string
+    {
+        if (!str_contains($code, '.')) {
+            return $code;
+        }
+
+        [$communeNumber, $hexPart] = explode('.', $code, 2);
+
+        // Pad the hex part to 4 characters
+        $paddedHex = strtoupper(str_pad($hexPart, 4, '0', STR_PAD_LEFT));
+
+        return "{$communeNumber}.{$paddedHex}";
     }
 
     /**

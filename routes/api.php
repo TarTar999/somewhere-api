@@ -10,12 +10,14 @@ use App\Http\Controllers\Api\V1\Auth\ProfileController;
 use App\Http\Controllers\Api\V1\CollectionAddressController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\DeliveryRequestController;
+use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DomiciliationController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProofOfLocationController;
 use App\Http\Controllers\Api\V1\ProofOfResidenceController;
+use App\Http\Controllers\Api\V1\StreetController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\WebAccessController;
 use Illuminate\Support\Facades\Route;
@@ -65,12 +67,28 @@ Route::get('tracks/shared/{token}', [TrackController::class, 'showByToken']);
 Route::get('proof-of-location/verify/{token}', [ProofOfLocationController::class, 'showByQrToken'])
     ->name('api.proof.verify');
 
+// Public document verification (via verification code)
+Route::get('documents/verify/{code}', [DocumentController::class, 'verify'])
+    ->name('api.documents.verify');
+
+// Document prices (public)
+Route::get('documents/prices', [DocumentController::class, 'prices']);
+
 // Web access token validation (public)
 Route::get('web-access/validate/{token}', [WebAccessController::class, 'validateToken']);
 
 // Fapshi webhook (public, no auth)
 Route::post('webhooks/fapshi', [PaymentController::class, 'handleWebhook'])
     ->name('webhooks.fapshi');
+
+// Streets (public - used for address creation)
+Route::prefix('streets')->group(function () {
+    Route::post('verify', [StreetController::class, 'verify']);
+    Route::get('/', [StreetController::class, 'index']);
+    Route::get('osm/{osmId}', [StreetController::class, 'showByOsmId']);
+    Route::get('code/{code}', [StreetController::class, 'showByCode']);
+    Route::post('{streetId}/calculate-address', [StreetController::class, 'calculateAddress']);
+});
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -99,8 +117,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('config', [PaymentController::class, 'getConfig']);
         Route::get('/', [PaymentController::class, 'index']);
         Route::get('{id}', [PaymentController::class, 'getStatus']);
+        // New document payment endpoints
+        Route::post('document', [PaymentController::class, 'initiateDocumentPayment']);
+        Route::post('document/direct', [PaymentController::class, 'initiateDirectPayment']);
+        // Legacy endpoints (deprecated, use document endpoints instead)
         Route::post('proof-of-location', [PaymentController::class, 'initiateProofOfLocationPayment']);
         Route::post('proof-of-location/direct', [PaymentController::class, 'initiateDirectPayment']);
+    });
+
+    // Documents (unified endpoint for all document types)
+    Route::prefix('documents')->group(function () {
+        Route::get('/', [DocumentController::class, 'index']);
+        Route::get('address/{addressId}', [DocumentController::class, 'byAddress']);
+        Route::get('{type}/{id}/download', [DocumentController::class, 'download'])
+            ->name('api.documents.download')
+            ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
     });
 
     // KYC

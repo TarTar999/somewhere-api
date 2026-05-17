@@ -22,12 +22,12 @@ class ProofOfLocationService
     }
 
     /**
-     * Generate proof of location after successful payment
+     * Generate document after successful payment
      */
-    public function generateAfterPayment(Payment $payment): ProofOfLocation
+    public function generateAfterPayment(Payment $payment, ?string $documentType = null): ProofOfLocation
     {
         if (!$payment->isSuccessful()) {
-            throw new \InvalidArgumentException('Payment must be successful to generate proof');
+            throw new \InvalidArgumentException('Payment must be successful to generate document');
         }
 
         $user = $payment->user;
@@ -37,17 +37,29 @@ class ProofOfLocationService
             throw new \InvalidArgumentException('Payment must have an associated address');
         }
 
-        // Check if address is verified
-        if ($address->verification_status !== 'approved') {
-            throw new \InvalidArgumentException('Address must be verified to generate proof');
+        // Determine document type from payment type if not specified
+        $documentType = $documentType ?? $payment->type;
+        if ($documentType === 'proof_of_location') {
+            $documentType = ProofOfLocation::TYPE_LOCATION_PLAN;
         }
 
-        // Create proof of location record
+        // Check if address is verified (only for proof_of_residence)
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE && $address->verification_status !== 'approved') {
+            throw new \InvalidArgumentException('Address must be verified to generate proof of residence');
+        }
+
+        // Get the price based on document type
+        $price = ProofOfLocation::getPrice($documentType);
+
+        // Create document record
         $proof = ProofOfLocation::create([
             'user_id' => $user->id,
             'address_id' => $address->id,
             'payment_id' => $payment->id,
-            'document_number' => ProofOfLocation::generateDocumentNumber($user, $address),
+            'document_type' => $documentType,
+            'document_number' => ProofOfLocation::generateDocumentNumber($user, $address, $documentType),
+            'verification_code' => ProofOfLocation::generateVerificationCode(),
+            'price' => $price,
             'file_path' => '', // Will be set after PDF generation
             'status' => 'active',
             'issued_at' => now(),
@@ -58,14 +70,16 @@ class ProofOfLocationService
         $filePath = $this->generatePdf($proof);
         $proof->update(['file_path' => $filePath]);
 
-        // Update user settings (for backward compatibility)
-        $settings = $user->getOrCreateSettings();
-        $settings->update([
-            'proof_of_residence' => $filePath,
-            'proof_of_residence_date' => now(),
-        ]);
+        // Update user settings (for backward compatibility, only for proof_of_residence)
+        if ($documentType === ProofOfLocation::TYPE_PROOF_OF_RESIDENCE) {
+            $settings = $user->getOrCreateSettings();
+            $settings->update([
+                'proof_of_residence' => $filePath,
+                'proof_of_residence_date' => now(),
+            ]);
+        }
 
-        // Generate invoice
+        // Generate invoice and receipt
         $this->invoiceService->createFromPayment($payment);
 
         return $proof->fresh();

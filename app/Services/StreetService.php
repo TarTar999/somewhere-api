@@ -202,10 +202,181 @@ class StreetService
     /**
      * Generate SW address from street code and house number
      * Format: @{numéro_maison} Rue {code_rue}
-     * Example: "@156 Rue 3.2A"
+     * Example: "@156 Rue 3.0002"
      */
     public function generateSwAddress(Street $street, int $streetNumber): string
     {
         return "@{$streetNumber} Rue {$street->code}";
+    }
+
+    /**
+     * Calculate GPS coordinates from street and distance (house number)
+     * This is the reverse of calculateHouseNumber
+     *
+     * @param Street $street The street
+     * @param int $streetNumber The house number (distance in meters from start)
+     * @return array|null Contains: latitude, longitude, street_side
+     */
+    public function calculateCoordinatesFromNumber(Street $street, int $streetNumber): ?array
+    {
+        $coordinates = $street->structure['coordinates'] ?? [];
+
+        if (count($coordinates) < 2) {
+            return null;
+        }
+
+        // Target distance is approximately the street number (in meters)
+        $targetDistance = $streetNumber;
+
+        // Determine side based on even/odd
+        $side = ($streetNumber % 2 === 0) ? 'left' : 'right';
+
+        // Walk along the street until we reach the target distance
+        $accumulatedDistance = 0;
+
+        for ($i = 0; $i < count($coordinates) - 1; $i++) {
+            $p1 = ['lat' => $coordinates[$i][1], 'lon' => $coordinates[$i][0]];
+            $p2 = ['lat' => $coordinates[$i + 1][1], 'lon' => $coordinates[$i + 1][0]];
+
+            $segmentLength = $this->haversineDistance($p1['lat'], $p1['lon'], $p2['lat'], $p2['lon']);
+
+            if ($accumulatedDistance + $segmentLength >= $targetDistance) {
+                // The point is on this segment
+                $remainingDistance = $targetDistance - $accumulatedDistance;
+                $ratio = $segmentLength > 0 ? $remainingDistance / $segmentLength : 0;
+
+                // Interpolate position on segment
+                $pointLat = $p1['lat'] + $ratio * ($p2['lat'] - $p1['lat']);
+                $pointLon = $p1['lon'] + $ratio * ($p2['lon'] - $p1['lon']);
+
+                // Offset perpendicular to street based on side (approximately 5 meters)
+                $offset = $this->calculatePerpendicularOffset($p1, $p2, $side, 5);
+
+                return [
+                    'latitude' => round($pointLat + $offset['lat'], 8),
+                    'longitude' => round($pointLon + $offset['lon'], 8),
+                    'streetSide' => $side,
+                    'distanceOnStreet' => $targetDistance,
+                    'segmentIndex' => $i,
+                ];
+            }
+
+            $accumulatedDistance += $segmentLength;
+        }
+
+        // If target distance exceeds street length, return the end point
+        $lastCoord = end($coordinates);
+        return [
+            'latitude' => round($lastCoord[1], 8),
+            'longitude' => round($lastCoord[0], 8),
+            'streetSide' => $side,
+            'distanceOnStreet' => $accumulatedDistance,
+            'segmentIndex' => count($coordinates) - 2,
+        ];
+    }
+
+    /**
+     * Calculate a perpendicular offset from the street line
+     *
+     * @param array $p1 Start point of segment ['lat', 'lon']
+     * @param array $p2 End point of segment ['lat', 'lon']
+     * @param string $side 'left' or 'right'
+     * @param float $meters Offset distance in meters
+     * @return array ['lat' => offset, 'lon' => offset]
+     */
+    protected function calculatePerpendicularOffset(array $p1, array $p2, string $side, float $meters): array
+    {
+        // Calculate direction vector
+        $dx = $p2['lon'] - $p1['lon'];
+        $dy = $p2['lat'] - $p1['lat'];
+
+        // Normalize
+        $length = sqrt($dx * $dx + $dy * $dy);
+        if ($length == 0) {
+            return ['lat' => 0, 'lon' => 0];
+        }
+
+        $dx /= $length;
+        $dy /= $length;
+
+        // Perpendicular vector (rotate 90 degrees)
+        // Left side: rotate counter-clockwise
+        // Right side: rotate clockwise
+        if ($side === 'left') {
+            $perpLon = -$dy;
+            $perpLat = $dx;
+        } else {
+            $perpLon = $dy;
+            $perpLat = -$dx;
+        }
+
+        // Convert meters to approximate degrees (at equator: 1 degree ≈ 111,320 meters)
+        // This is a rough approximation, good enough for small offsets
+        $metersPerDegreeLat = 111320;
+        $metersPerDegreeLon = 111320 * cos(deg2rad(($p1['lat'] + $p2['lat']) / 2));
+
+        return [
+            'lat' => ($perpLat * $meters) / $metersPerDegreeLat,
+            'lon' => ($perpLon * $meters) / $metersPerDegreeLon,
+        ];
+    }
+
+    /**
+     * Parse a SomeWhere address query and extract components
+     * Formats supported:
+     * - "@156 Rue 3.0002"
+     * - "156 Rue 3.0002"
+     * - "@156 3.0002"
+     *
+     * @param string $query The search query
+     * @return array|null ['streetNumber' => int, 'streetCode' => string] or null
+     */
+    public function parseSwAddressQuery(string $query): ?array
+    {
+        $query = trim($query);
+
+        // Remove @ prefix if present
+        $query = ltrim($query, '@');
+
+        // Split by spaces
+        $parts = preg_split('/\s+/', $query);
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        // First part should be the street number
+        $streetNumber = null;
+        if (is_numeric($parts[0])) {
+            $streetNumber = (int) $parts[0];
+        } else {
+            return null;
+        }
+
+        // Find the street code (looks like X.XXXX)
+        $streetCode = null;
+        foreach ($parts as $index => $part) {
+            // Skip "Rue", "Ave", etc.
+            if (in_array(strtolower($part), ['rue', 'ave', 'avenue', 'blvd', 'boulevard'])) {
+                continue;
+            }
+            // Check if it looks like a street code (number.hexcode)
+            if (preg_match('/^\d+\.[A-F0-9]+$/i', $part)) {
+                $streetCode = strtoupper($part);
+                break;
+            }
+        }
+
+        if (!$streetCode) {
+            return null;
+        }
+
+        // Normalize the street code to padded format
+        $streetCode = Street::formatCodeToPadded($streetCode);
+
+        return [
+            'streetNumber' => $streetNumber,
+            'streetCode' => $streetCode,
+        ];
     }
 }
