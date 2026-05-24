@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,4 +39,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
     Route::get('collections/{collection}', [CollectionController::class, 'show'])->name('collections.show');
     Route::delete('collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
+
+    // Notifications management (engagement messages)
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/create', [NotificationController::class, 'create'])->name('notifications.create');
+    Route::post('notifications/send', [NotificationController::class, 'send'])->name('notifications.send');
+    Route::get('notifications/stats', [NotificationController::class, 'stats'])->name('notifications.stats');
 });

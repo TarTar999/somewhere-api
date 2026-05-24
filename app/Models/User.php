@@ -224,4 +224,19 @@ class User extends Authenticatable
             ->where('status', 'approved')
             ->first();
     }
+
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function unreadNotifications(): HasMany
+    {
+        return $this->appNotifications()->whereNull('read_at');
+    }
+
+    public function getUnreadNotificationsCountAttribute(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
 }

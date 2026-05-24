@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DomiciliationController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\KycController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProofOfLocationController;
 use App\Http\Controllers\Api\V1\ProofOfResidenceController;
@@ -304,5 +305,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('accept', [DomiciliationController::class, 'acceptInvitation']);
         Route::get('address/{addressId}/residents', [DomiciliationController::class, 'getResidents']);
         Route::delete('address/{addressId}/residents/{domiciliationId}', [DomiciliationController::class, 'removeResident']);
+    });
+
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('unread-count', [NotificationController::class, 'unreadCount']);
+        Route::get('summary', [NotificationController::class, 'summary']);
+        Route::get('recent', [NotificationController::class, 'recent']);
+        Route::post('mark-read', [NotificationController::class, 'markMultipleAsRead']);
+        Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('bulk', [NotificationController::class, 'destroyMultiple']);
+        Route::get('{notification}', [NotificationController::class, 'show']);
+        Route::post('{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::delete('{notification}', [NotificationController::class, 'destroy']);
     });
 });

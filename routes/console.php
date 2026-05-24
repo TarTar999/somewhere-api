@@ -22,3 +22,9 @@ Schedule::command('accounts:process-deletions')->dailyAt('02:00');
 
 // Clean up expired web access tokens every hour
 Schedule::command('tokens:cleanup')->hourly();
+
+// Notify users about expiring documents daily at 9 AM
+Schedule::command('notifications:expiring-documents --days=7')->dailyAt('09:00');
+
+// Send reminder for documents expiring in 3 days at 9 AM
+Schedule::command('notifications:expiring-documents --days=3')->dailyAt('09:00');
