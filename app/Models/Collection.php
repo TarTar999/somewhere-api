@@ -55,7 +55,7 @@ class Collection extends Model
         return $this->belongsToMany(Address::class, 'address_collection')
             ->withPivot('order')
             ->withTimestamps()
-            ->orderBy('pivot_order');
+            ->orderByPivot('order');
     }
 
     public function sharedWith(): HasMany

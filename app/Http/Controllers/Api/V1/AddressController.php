@@ -32,7 +32,7 @@ class AddressController extends Controller
     public function index(): JsonResponse
     {
         $addresses = auth()->user()->addresses()
-            ->with('street')
+            ->with(['street', 'itineraryStreet'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -186,7 +186,7 @@ class AddressController extends Controller
             return $this->error('Unauthorized', 403);
         }
 
-        $address->load('street');
+        $address->load(['street', 'itineraryStreet']);
 
         return $this->success($this->formatAddress($address));
     }
@@ -564,9 +564,72 @@ class AddressController extends Controller
         ];
     }
 
+    /**
+     * Update address itinerary (custom path to the address)
+     */
+    public function updateItinerary(Request $request, Address $address): JsonResponse
+    {
+        if ($address->user_id !== auth()->id()) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        $request->validate([
+            'itinerary' => 'required|array|min:1', // Minimum 1 point (start on known road)
+            'itinerary.*.lat' => 'required|numeric|between:-90,90',
+            'itinerary.*.lng' => 'required|numeric|between:-180,180',
+            'itinerary.*.order' => 'nullable|integer|min:0',
+            'itineraryStreetId' => 'nullable|exists:streets,id',
+            'itineraryDescription' => 'nullable|string|max:1000',
+        ]);
+
+        // Sort points by order if provided, otherwise use array order
+        $points = collect($request->itinerary)->map(function ($point, $index) {
+            return [
+                'lat' => (float) $point['lat'],
+                'lng' => (float) $point['lng'],
+                'order' => $point['order'] ?? $index,
+            ];
+        })->sortBy('order')->values()->toArray();
+
+        $address->update([
+            'itinerary' => $points,
+            'itinerary_street_id' => $request->itineraryStreetId,
+            'itinerary_description' => $request->itineraryDescription,
+        ]);
+
+        // Calculate and save distance
+        $distance = $address->calculateItineraryDistance();
+        if ($distance) {
+            $address->update(['itinerary_distance' => $distance]);
+        }
+
+        $address->load(['street', 'itineraryStreet']);
+
+        return $this->success($this->formatAddress($address), 'Itinerary updated successfully');
+    }
+
+    /**
+     * Delete address itinerary
+     */
+    public function deleteItinerary(Address $address): JsonResponse
+    {
+        if ($address->user_id !== auth()->id()) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        $address->update([
+            'itinerary' => null,
+            'itinerary_street_id' => null,
+            'itinerary_description' => null,
+            'itinerary_distance' => null,
+        ]);
+
+        return $this->success(null, 'Itinerary deleted successfully');
+    }
+
     protected function formatAddress(Address $address): array
     {
-        return [
+        $data = [
             'id' => $address->id,
             'swAddress' => $address->sw_address,
             'displayName' => $address->display_name,
@@ -582,6 +645,32 @@ class AddressController extends Controller
             'createdAt' => $address->created_at->toISOString(),
             'updatedAt' => $address->updated_at->toISOString(),
         ];
+
+        // Add itinerary data if present
+        if ($address->hasItinerary()) {
+            $data['itinerary'] = [
+                'points' => $address->itinerary,
+                'pointsCount' => count($address->itinerary),
+                'description' => $address->itinerary_description,
+                'distance' => $address->itinerary_distance,
+                'distanceFormatted' => $address->itinerary_distance
+                    ? ($address->itinerary_distance >= 1000
+                        ? number_format($address->itinerary_distance / 1000, 2) . ' km'
+                        : $address->itinerary_distance . ' m')
+                    : null,
+                'destinationStreet' => $address->relationLoaded('itineraryStreet') && $address->itineraryStreet
+                    ? [
+                        'id' => $address->itineraryStreet->id,
+                        'code' => $address->itineraryStreet->code,
+                        'displayName' => $address->itineraryStreet->display_name,
+                    ]
+                    : null,
+            ];
+        } else {
+            $data['itinerary'] = null;
+        }
+
+        return $data;
     }
 
     protected function formatAddresses($addresses): array

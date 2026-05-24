@@ -25,6 +25,7 @@ class UpdateProfileRequest extends FormRequest
             'nuiNumber' => ['sometimes', 'nullable', 'string', 'max:50'],
             'cniNumber' => ['sometimes', 'nullable', 'string', 'max:50'],
             'cniExpirationDate' => ['sometimes', 'nullable', 'date'],
+            'lottieAvatar' => ['sometimes', 'nullable', 'string', 'max:50'],
             'settings' => ['sometimes', 'array'],
             'settings.language' => ['sometimes', 'string', 'max:10'],
             'settings.unit' => ['sometimes', 'in:metric,imperial'],

@@ -10,6 +10,7 @@ class Controller extends BaseController
     protected function success($data = null, string $message = 'Success', int $code = 200): JsonResponse
     {
         $response = [
+            'success' => true,
             'message' => $message,
         ];
 
@@ -28,6 +29,7 @@ class Controller extends BaseController
     protected function error(string $message = 'Error', int $code = 400, $errors = null): JsonResponse
     {
         $response = [
+            'success' => false,
             'message' => $message,
         ];
 

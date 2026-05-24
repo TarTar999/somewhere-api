@@ -56,6 +56,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Mobile App Deep Linking
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for deep linking to the mobile app. The share_url is used
+    | for payment callbacks and sharing, while the deep_link_scheme is the
+    | custom URL scheme registered by the mobile app.
+    |
+    */
+
+    'share_url' => env('APP_SHARE_URL', env('APP_URL', 'http://localhost')),
+    'deep_link_scheme' => env('APP_DEEP_LINK_SCHEME', 'somewhereapp'),
+    'expo_url' => env('APP_EXPO_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -42,22 +42,33 @@ class PaymentController extends Controller
     /**
      * Initiate payment for document (hosted checkout)
      * Supports both location_plan and proof_of_residence
+     * Accepts both camelCase and snake_case field names
+     *
+     * Note: redirect_url is optional. If not provided, uses the web callback
+     * which then redirects to the mobile app using deep linking.
      */
     public function initiateDocumentPayment(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Normalize field names (accept both snake_case and camelCase)
+        $addressId = $request->input('addressId') ?? $request->input('address_id');
+        $documentType = $request->input('documentType') ?? $request->input('document_type');
+
+        $validator = Validator::make([
+            'addressId' => $addressId,
+            'documentType' => $documentType,
+        ], [
             'addressId' => 'required|exists:addresses,id',
             'documentType' => 'required|in:location_plan,proof_of_residence',
-            'redirectUrl' => 'required|url',
         ]);
 
         if ($validator->fails()) {
             return $this->error('Validation failed', 422, $validator->errors());
         }
 
-        $address = Address::find($request->addressId);
+        /** @var Address $address */
+        $address = Address::find($addressId);
+        /** @var \App\Models\User $user */
         $user = auth()->user();
-        $documentType = $request->documentType;
 
         // Verify ownership or domiciliation for proof_of_residence
         $hasAccess = $address->user_id === $user->id;
@@ -106,7 +117,8 @@ class PaymentController extends Controller
             return $this->success([
                 'paymentId' => $pendingPayment->id,
                 'transactionId' => $pendingPayment->transaction_id,
-                'paymentLink' => $pendingPayment->payment_link,
+                'paymentUrl' => $pendingPayment->payment_link,
+                'paymentLink' => $pendingPayment->payment_link, // Backward compatibility
                 'amount' => $pendingPayment->amount,
                 'currency' => $pendingPayment->currency,
                 'documentType' => $documentType,
@@ -115,12 +127,15 @@ class PaymentController extends Controller
             ], 'Existing pending payment found');
         }
 
+        // Build the callback URL (web page that redirects to app via deep link)
+        $callbackUrl = \App\Http\Controllers\PaymentCallbackController::getCallbackUrl($address->id);
+
         // Create new payment
         $payment = $this->fapshiService->createDocumentPayment(
             $user,
             $address,
             $documentType,
-            $request->redirectUrl
+            $callbackUrl
         );
 
         if ($payment->isFailed()) {
@@ -130,7 +145,8 @@ class PaymentController extends Controller
         return $this->success([
             'paymentId' => $payment->id,
             'transactionId' => $payment->transaction_id,
-            'paymentLink' => $payment->payment_link,
+            'paymentUrl' => $payment->payment_link,
+            'paymentLink' => $payment->payment_link, // Backward compatibility
             'amount' => $payment->amount,
             'currency' => $payment->currency,
             'documentType' => $documentType,
@@ -152,10 +168,20 @@ class PaymentController extends Controller
 
     /**
      * Initiate direct payment (Mobile Money)
+     * Accepts both camelCase and snake_case field names
      */
     public function initiateDirectPayment(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Normalize field names (accept both snake_case and camelCase)
+        $addressId = $request->input('addressId') ?? $request->input('address_id');
+        $documentType = $request->input('documentType') ?? $request->input('document_type');
+        $phone = $request->input('phone');
+
+        $validator = Validator::make([
+            'addressId' => $addressId,
+            'documentType' => $documentType,
+            'phone' => $phone,
+        ], [
             'addressId' => 'required|exists:addresses,id',
             'documentType' => 'nullable|in:location_plan,proof_of_residence',
             'phone' => 'required|string',
@@ -165,9 +191,11 @@ class PaymentController extends Controller
             return $this->error('Validation failed', 422, $validator->errors());
         }
 
-        $address = Address::find($request->addressId);
+        /** @var Address $address */
+        $address = Address::find($addressId);
+        /** @var \App\Models\User $user */
         $user = auth()->user();
-        $documentType = $request->documentType ?? ProofOfLocation::TYPE_LOCATION_PLAN;
+        $documentType ??= ProofOfLocation::TYPE_LOCATION_PLAN;
 
         // Verify ownership or domiciliation for proof_of_residence
         $hasAccess = $address->user_id === $user->id;
@@ -193,7 +221,7 @@ class PaymentController extends Controller
             $user,
             $address,
             $documentType,
-            $request->phone
+            $phone
         );
 
         if ($payment->isFailed()) {
@@ -207,7 +235,7 @@ class PaymentController extends Controller
             'currency' => $payment->currency,
             'documentType' => $documentType,
             'status' => $payment->status,
-            'message' => 'Please confirm the payment on your phone',
+            'message' => 'Veuillez confirmer le paiement sur votre téléphone',
         ], 'Direct payment initiated');
     }
 
@@ -216,13 +244,16 @@ class PaymentController extends Controller
      */
     public function getStatus(int $id): JsonResponse
     {
+        /** @var Payment|null $payment */
         $payment = Payment::find($id);
 
         if (!$payment) {
             return $this->error('Payment not found', 404);
         }
 
-        if ($payment->user_id !== auth()->id()) {
+        /** @var int $userId */
+        $userId = auth()->id();
+        if ($payment->user_id !== $userId) {
             return $this->error('Unauthorized', 403);
         }
 
@@ -277,6 +308,7 @@ class PaymentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         $payments = $user->payments()
@@ -284,7 +316,7 @@ class PaymentController extends Controller
             ->orderByDesc('created_at')
             ->paginate($request->get('perPage', 15));
 
-        $data = $payments->map(fn($p) => [
+        $payments->getCollection()->transform(fn($p) => [
             'id' => $p->id,
             'transactionId' => $p->transaction_id,
             'type' => $p->type,
@@ -300,7 +332,7 @@ class PaymentController extends Controller
             'createdAt' => $p->created_at->toISOString(),
         ]);
 
-        return $this->paginated($payments->setCollection($data), 'Payments retrieved');
+        return $this->paginated($payments, 'Payments retrieved');
     }
 
     /**

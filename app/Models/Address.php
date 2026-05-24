@@ -36,6 +36,11 @@ class Address extends Model
         'signature',
         'verification_status',
         'video_path',
+        // Itinerary fields
+        'itinerary',
+        'itinerary_street_id',
+        'itinerary_description',
+        'itinerary_distance',
     ];
 
     protected function casts(): array
@@ -45,6 +50,7 @@ class Address extends Model
             'longitude' => 'decimal:8',
             'accuracy' => 'float',
             'honor_declaration' => 'boolean',
+            'itinerary' => 'array',
         ];
     }
 
@@ -108,6 +114,11 @@ class Address extends Model
     public function street(): BelongsTo
     {
         return $this->belongsTo(Street::class);
+    }
+
+    public function itineraryStreet(): BelongsTo
+    {
+        return $this->belongsTo(Street::class, 'itinerary_street_id');
     }
 
     public function collections(): BelongsToMany
@@ -174,5 +185,98 @@ class Address extends Model
         $baseUrl = config('share.base_url', config('app.url'));
         $encodedSwAddress = urlencode($this->sw_address);
         return "{$baseUrl}/share/address/sw/{$encodedSwAddress}";
+    }
+
+    /**
+     * Check if address has a custom itinerary
+     */
+    public function hasItinerary(): bool
+    {
+        return !empty($this->itinerary) && is_array($this->itinerary) && count($this->itinerary) > 0;
+    }
+
+    /**
+     * Get formatted itinerary data
+     */
+    public function getItineraryDataAttribute(): ?array
+    {
+        if (!$this->hasItinerary()) {
+            return null;
+        }
+
+        return [
+            'points' => $this->itinerary,
+            'pointsCount' => count($this->itinerary),
+            'description' => $this->itinerary_description,
+            'distance' => $this->itinerary_distance,
+            'destinationStreet' => $this->relationLoaded('itineraryStreet') && $this->itineraryStreet
+                ? [
+                    'id' => $this->itineraryStreet->id,
+                    'code' => $this->itineraryStreet->code,
+                    'displayName' => $this->itineraryStreet->display_name,
+                ]
+                : null,
+        ];
+    }
+
+    /**
+     * Calculate itinerary distance from points to address (in meters)
+     * Includes distance from all itinerary points plus distance to the address
+     */
+    public function calculateItineraryDistance(): ?int
+    {
+        if (!$this->hasItinerary() || count($this->itinerary) < 1) {
+            return null;
+        }
+
+        $distance = 0;
+        $points = $this->itinerary;
+
+        // Calculate distance between itinerary points
+        for ($i = 0; $i < count($points) - 1; $i++) {
+            $distance += $this->haversineDistance(
+                $points[$i]['lat'],
+                $points[$i]['lng'],
+                $points[$i + 1]['lat'],
+                $points[$i + 1]['lng']
+            );
+        }
+
+        // Add distance from last itinerary point to the address
+        $lastPoint = end($points);
+        $addressLat = (float) $this->latitude;
+        $addressLng = (float) $this->longitude;
+
+        $distance += $this->haversineDistance(
+            $lastPoint['lat'],
+            $lastPoint['lng'],
+            $addressLat,
+            $addressLng
+        );
+
+        return (int) round($distance);
+    }
+
+    /**
+     * Calculate distance between two points using Haversine formula (returns meters)
+     */
+    protected function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371000; // meters
+
+        $latFrom = deg2rad($lat1);
+        $lonFrom = deg2rad($lng1);
+        $latTo = deg2rad($lat2);
+        $lonTo = deg2rad($lng2);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $a = sin($latDelta / 2) ** 2 +
+            cos($latFrom) * cos($latTo) * sin($lonDelta / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 }

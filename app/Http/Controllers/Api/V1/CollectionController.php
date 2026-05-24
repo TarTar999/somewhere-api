@@ -112,10 +112,15 @@ class CollectionController extends Controller
             return $this->error('Unauthorized', 403);
         }
 
-        $recipient = User::where('email', $request->recipientEmail)->first();
+        // Find recipient by phone number (try multiple formats)
+        $phone = $request->recipientPhone;
+        $recipient = User::where('phone', $phone)
+            ->orWhere('phone', '+' . $phone)
+            ->orWhere('phone', '+' . ltrim($phone, '+'))
+            ->first();
 
         if (!$recipient) {
-            return $this->error('User not found', 404);
+            return $this->error('Utilisateur non trouvé avec ce numéro', 404);
         }
 
         if ($recipient->id === auth()->id()) {
@@ -150,15 +155,55 @@ class CollectionController extends Controller
                 $collection = $shared->collection;
                 $formatted = $this->formatCollection($collection);
                 $formatted['permissions'] = $shared->permissions;
-                $formatted['sharedBy'] = [
-                    'id' => $collection->owner->id,
-                    'name' => $collection->owner->full_name,
-                    'email' => $collection->owner->email,
-                ];
+                $formatted['sharedBy'] = $this->formatUserForShare($collection->owner);
                 return $formatted;
             });
 
         return $this->success($sharedCollections);
+    }
+
+    /**
+     * Get list of users this collection is shared with (owner only)
+     */
+    public function getSharedWith(Collection $collection): JsonResponse
+    {
+        if ($collection->owner_id !== auth()->id()) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        $sharedWith = SharedCollection::where('collection_id', $collection->id)
+            ->with('sharedWithUser')
+            ->get()
+            ->map(function ($shared) {
+                return [
+                    'id' => $shared->id,
+                    'user' => $this->formatUserForShare($shared->sharedWithUser),
+                    'permissions' => $shared->permissions,
+                    'sharedAt' => $shared->created_at?->toISOString(),
+                ];
+            });
+
+        return $this->success($sharedWith);
+    }
+
+    /**
+     * Revoke share access for a user
+     */
+    public function unshare(Collection $collection, User $user): JsonResponse
+    {
+        if ($collection->owner_id !== auth()->id()) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        $deleted = SharedCollection::where('collection_id', $collection->id)
+            ->where('shared_with_user_id', $user->id)
+            ->delete();
+
+        if (!$deleted) {
+            return $this->error('Share not found', 404);
+        }
+
+        return $this->success(null, 'Share revoked successfully');
     }
 
     protected function canAccessCollection(Collection $collection): bool
@@ -200,5 +245,16 @@ class CollectionController extends Controller
     protected function formatCollections($collections): array
     {
         return $collections->map(fn($c) => $this->formatCollection($c))->toArray();
+    }
+
+    protected function formatUserForShare($user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->full_name,
+            'initials' => $user->initials,
+            'phone' => $user->phone,
+            'lottieAvatar' => $user->lottie_avatar,
+        ];
     }
 }

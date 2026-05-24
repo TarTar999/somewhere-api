@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ShareController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+
+// Payment callback (Fapshi redirects here, then we redirect to app)
+Route::get('/payment/callback', [PaymentCallbackController::class, 'handleCallback'])
+    ->name('payment.callback');
 
 Route::get('/', function () {
     return Inertia::render('welcome', [

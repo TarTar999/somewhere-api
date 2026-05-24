@@ -57,6 +57,64 @@ Route::prefix('auth')->group(function () {
 Route::get('proof-of-residence/download', [ProofOfResidenceController::class, 'download'])
     ->name('api.proof-of-residence.download');
 
+// PDF Preview routes (local development only)
+if (app()->environment('local')) {
+    Route::prefix('test/pdf')->group(function () {
+        Route::get('location-plan/{proofId}', function ($proofId) {
+            $proof = \App\Models\ProofOfLocation::with(['user', 'address.street', 'address.itineraryStreet', 'payment'])->findOrFail($proofId);
+            $pdfService = app(\App\Services\PdfService::class);
+            return $pdfService->generateLocationPlanPdf($proof);
+        });
+        Route::get('proof-of-residence/{proofId}', function ($proofId) {
+            $proof = \App\Models\ProofOfLocation::with(['user', 'address.street', 'address.itineraryStreet', 'payment'])->findOrFail($proofId);
+            $pdfService = app(\App\Services\PdfService::class);
+            return $pdfService->generateProofOfResidencePdf($proof);
+        });
+        Route::get('invoice/{invoiceId}', function ($invoiceId) {
+            $invoice = \App\Models\Invoice::with(['user', 'payment.address', 'payment.proofOfLocation'])->findOrFail($invoiceId);
+            $pdfService = app(\App\Services\PdfService::class);
+            return $pdfService->generateInvoicePdf($invoice);
+        });
+    });
+
+    // Debug signature route (from address)
+    Route::get('test/signature/{addressId}', function ($addressId) {
+        $address = \App\Models\Address::findOrFail($addressId);
+        $pdfService = app(\App\Services\PdfService::class);
+        $signatureDataUrl = $pdfService->getSignatureDataUrl($address->signature);
+
+        return response()->json([
+            'address_id' => $addressId,
+            'has_signature' => !empty($address->signature),
+            'signature_length' => $address->signature ? strlen($address->signature) : 0,
+            'signature_preview' => $address->signature ? substr($address->signature, 0, 100) . '...' : null,
+            'starts_with_M' => $address->signature ? str_starts_with(trim($address->signature), 'M') : false,
+            'contains_L' => $address->signature ? str_contains($address->signature, 'L') : false,
+            'converted_data_url' => $signatureDataUrl ? substr($signatureDataUrl, 0, 100) . '...' : null,
+            'full_signature' => $address->signature,
+        ]);
+    });
+
+    // Preview signature as SVG (from address)
+    Route::get('test/signature-preview/{addressId}', function ($addressId) {
+        $address = \App\Models\Address::findOrFail($addressId);
+        $pdfService = app(\App\Services\PdfService::class);
+        $signatureDataUrl = $pdfService->getSignatureDataUrl($address->signature);
+
+        if (!$signatureDataUrl) {
+            return 'No signature for address ' . $addressId;
+        }
+
+        return '<html><body style="padding: 50px; background: #f0f0f0;">
+            <h3>Address Signature Preview (ID: ' . $addressId . ')</h3>
+            <div style="background: white; padding: 20px; border: 1px solid #ccc; display: inline-block;">
+                <img src="' . $signatureDataUrl . '" style="max-width: 300px; max-height: 150px;">
+            </div>
+            <pre style="margin-top: 20px; background: #eee; padding: 10px; overflow: auto; max-width: 800px;">' . htmlspecialchars(substr($address->signature ?? '', 0, 500)) . '...</pre>
+        </body></html>';
+    });
+}
+
 // Public delivery request route (accessible without auth)
 Route::get('delivery-requests/token/{token}', [DeliveryRequestController::class, 'showByToken']);
 
@@ -97,10 +155,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('profile', [ProfileController::class, 'show']);
+        Route::get('avatars', [ProfileController::class, 'getAvatarConfig']);
         Route::put('users/{user}', [ProfileController::class, 'update']);
         Route::delete('users/{user}', [ProfileController::class, 'destroy']);
         Route::post('change-password', [PasswordController::class, 'change']);
         Route::post('users/{user}/collections', [CollectionController::class, 'storeForUser']);
+
+        // Signature management
+        Route::get('signature', [ProfileController::class, 'getSignature']);
+        Route::post('signature', [ProfileController::class, 'updateSignature']);
+        Route::delete('signature', [ProfileController::class, 'deleteSignature']);
     });
 
     // Account management
@@ -183,6 +247,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{address}', [AddressController::class, 'destroy']);
         Route::post('{address}/share', [AddressController::class, 'share']);
         Route::get('{address}/qr-code', [AddressController::class, 'qrCode']);
+        // Itinerary (custom path) management
+        Route::put('{address}/itinerary', [AddressController::class, 'updateItinerary']);
+        Route::delete('{address}/itinerary', [AddressController::class, 'deleteItinerary']);
     });
 
     // Collections
@@ -194,6 +261,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('{collection}', [CollectionController::class, 'update']);
         Route::delete('{collection}', [CollectionController::class, 'destroy']);
         Route::post('{collection}/share', [CollectionController::class, 'share']);
+        Route::get('{collection}/shared-with', [CollectionController::class, 'getSharedWith']);
+        Route::delete('{collection}/share/{user}', [CollectionController::class, 'unshare']);
         Route::post('{collection}/addresses', [CollectionAddressController::class, 'add']);
         Route::delete('{collection}/addresses/{address}', [CollectionAddressController::class, 'remove']);
     });

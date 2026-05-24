@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\Auth;
 
+use App\Services\SmsService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -12,17 +13,27 @@ class RegisterRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Normalize phone number before validation
+        if ($this->has('phone')) {
+            $this->merge([
+                'phone' => SmsService::normalizePhone($this->phone),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
             'firstName' => ['required', 'string', 'max:255'],
             'lastName' => ['required', 'string', 'max:255'],
             'civility' => ['nullable', 'in:male,female'],
             'cni' => ['nullable', 'string', 'max:50'],
             'nui' => ['nullable', 'string', 'max:50'],
             'cniExpiration' => ['nullable', 'date'],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'email' => ['nullable', 'email', 'unique:users,email'],
             'password' => ['required', 'string', Password::min(6)],
             'quartier' => ['nullable', 'string', 'max:255'],
             'sousQuartier' => ['nullable', 'string', 'max:255'],
@@ -36,9 +47,9 @@ class RegisterRequest extends FormRequest
     {
         return [
             'phone.required' => 'Le numéro de téléphone est requis.',
+            'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
             'firstName.required' => 'Le prénom est requis.',
             'lastName.required' => 'Le nom est requis.',
-            'email.required' => 'L\'adresse email est requise.',
             'email.unique' => 'Cette adresse email est déjà utilisée.',
             'password.required' => 'Le mot de passe est requis.',
         ];

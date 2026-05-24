@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\Collection;
 
+use App\Services\SmsService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ShareCollectionRequest extends FormRequest
@@ -11,10 +12,19 @@ class ShareCollectionRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('recipientPhone')) {
+            $this->merge([
+                'recipientPhone' => SmsService::normalizePhone($this->recipientPhone),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'recipientEmail' => ['required', 'email'],
+            'recipientPhone' => ['required', 'string', 'max:20'],
             'permissions' => ['required', 'in:view,edit'],
         ];
     }
@@ -22,8 +32,8 @@ class ShareCollectionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recipientEmail.required' => 'L\'adresse email du destinataire est requise.',
-            'recipientEmail.email' => 'L\'adresse email n\'est pas valide.',
+            'recipientPhone.required' => 'Le numéro de téléphone du destinataire est requis.',
+            'recipientPhone.string' => 'Le numéro de téléphone n\'est pas valide.',
             'permissions.required' => 'Les permissions sont requises.',
             'permissions.in' => 'Les permissions doivent être "view" ou "edit".',
         ];

@@ -48,4 +48,8 @@ return [
         'proof_of_location_price' => env('FAPSHI_PROOF_OF_LOCATION_PRICE', 1000), // Price in XAF
     ],
 
+    'mapbox' => [
+        'token' => env('MAPBOX_ACCESS_TOKEN', ''),
+    ],
+
 ];

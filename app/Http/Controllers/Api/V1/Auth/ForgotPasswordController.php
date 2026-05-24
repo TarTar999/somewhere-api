@@ -34,6 +34,7 @@ class ForgotPasswordController extends Controller
         $phone = SmsService::normalizePhone($request->phone);
 
         // Check if user exists with this phone (try both formats)
+        /** @var User|null $user */
         $user = User::where('phone', $phone)
             ->orWhere('phone', $request->phone)
             ->orWhere('phone', '+' . $phone)
@@ -95,6 +96,7 @@ class ForgotPasswordController extends Controller
             return $this->error('Validation failed', 422, $validator->errors());
         }
 
+        /** @var User|null $user */
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
@@ -160,6 +162,7 @@ class ForgotPasswordController extends Controller
             error_log("  - Code: {$o->code}, Purpose: {$o->purpose}, Type: {$o->type}, Expires: {$o->expires_at}, Verified: " . ($o->verified_at ?? 'null'));
         }
 
+        /** @var OtpCode|null $otp */
         $otp = OtpCode::where('identifier', $identifier)
             ->where('type', $type)
             ->where('purpose', 'password_reset')
@@ -224,6 +227,7 @@ class ForgotPasswordController extends Controller
         $type = $request->phone ? 'phone' : 'email';
 
         // Find the verified OTP with matching reset token
+        /** @var OtpCode|null $otp */
         $otp = OtpCode::where('identifier', $identifier)
             ->where('type', $type)
             ->where('purpose', 'password_reset')
@@ -243,14 +247,13 @@ class ForgotPasswordController extends Controller
         }
 
         // Find user (try multiple phone formats)
-        if ($type === 'phone') {
-            $user = User::where('phone', $identifier)
+        /** @var User|null $user */
+        $user = $type === 'phone'
+            ? User::where('phone', $identifier)
                 ->orWhere('phone', '+' . $identifier)
                 ->orWhere('phone', $request->phone)
-                ->first();
-        } else {
-            $user = User::where('email', $identifier)->first();
-        }
+                ->first()
+            : User::where('email', $identifier)->first();
 
         if (!$user) {
             return $this->error('User not found', 404);

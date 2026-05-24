@@ -7,6 +7,7 @@ use App\Http\Requests\Api\Auth\UpdateProfileRequest;
 use App\Models\User;
 use App\Services\TokenService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
@@ -54,6 +55,9 @@ class ProfileController extends Controller
         }
         if ($request->has('cniExpirationDate')) {
             $userData['cni_expiration_date'] = $request->cniExpirationDate;
+        }
+        if ($request->has('lottieAvatar')) {
+            $userData['lottie_avatar'] = $request->lottieAvatar;
         }
 
         if (!empty($userData)) {
@@ -129,10 +133,14 @@ class ProfileController extends Controller
             'phone' => $user->phone,
             'firstName' => $user->first_name,
             'lastName' => $user->last_name,
+            'fullName' => $user->full_name,
+            'initials' => $user->initials,
             'sex' => $user->sex,
             'nuiNumber' => $user->nui_number,
             'cniNumber' => $user->cni_number,
             'cniExpirationDate' => $user->cni_expiration_date?->toISOString(),
+            'lottieAvatar' => $user->lottie_avatar,
+            'hasSignature' => !empty($user->signature),
             'settings' => $user->settings ? [
                 'language' => $user->settings->language,
                 'unit' => $user->settings->unit,
@@ -151,5 +159,70 @@ class ProfileController extends Controller
                 'type' => $c->type,
             ]),
         ];
+    }
+
+    /**
+     * Get available avatars and animations configuration
+     */
+    public function getAvatarConfig(): JsonResponse
+    {
+        return $this->success([
+            'avatars' => config('avatars.avatars'),
+            'animations' => config('avatars.animations'),
+            'default' => config('avatars.default'),
+        ]);
+    }
+
+    /**
+     * Update user signature
+     * Expects base64 data URL (e.g., "data:image/png;base64,...")
+     */
+    public function updateSignature(Request $request): JsonResponse
+    {
+        $request->validate([
+            'signature' => 'required|string|max:500000', // ~375KB base64
+        ]);
+
+        $signature = $request->signature;
+
+        // Validate it's a proper data URL
+        if (!preg_match('/^data:image\/(png|jpeg|jpg|svg\+xml);base64,/', $signature)) {
+            return $this->error('Invalid signature format. Must be a base64 data URL (PNG, JPEG, or SVG)', 422);
+        }
+
+        $user = auth()->user();
+        $user->update(['signature' => $signature]);
+
+        return $this->success([
+            'hasSignature' => true,
+            'message' => 'Signature updated successfully',
+        ]);
+    }
+
+    /**
+     * Delete user signature
+     */
+    public function deleteSignature(): JsonResponse
+    {
+        $user = auth()->user();
+        $user->update(['signature' => null]);
+
+        return $this->success([
+            'hasSignature' => false,
+            'message' => 'Signature deleted successfully',
+        ]);
+    }
+
+    /**
+     * Get user signature status
+     */
+    public function getSignature(): JsonResponse
+    {
+        $user = auth()->user();
+
+        return $this->success([
+            'hasSignature' => !empty($user->signature),
+            'signature' => $user->signature, // Will be null if not set
+        ]);
     }
 }

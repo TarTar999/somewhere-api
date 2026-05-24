@@ -208,6 +208,12 @@ class FapshiService
         $amount = $this->getDocumentPrice($documentType);
         $label = $this->getDocumentLabel($documentType);
 
+        // Normalize phone for Fapshi (must be 9 digits: 6XXXXXXXX)
+        $fapshiPhone = $this->normalizePhoneForFapshi($phone);
+
+        // Detect operator (MTN = mobile money, Orange = orange money)
+        $medium = $this->detectOperator($phone);
+
         $payment = Payment::create([
             'user_id' => $user->id,
             'address_id' => $address->id,
@@ -215,15 +221,16 @@ class FapshiService
             'amount' => $amount,
             'currency' => 'XAF',
             'status' => 'pending',
-            'phone' => $phone,
-            'medium' => 'mobile money',
+            'phone' => $phone, // Store original phone
+            'medium' => $medium,
             'expires_at' => now()->addHours(24),
         ]);
 
         try {
             $response = $this->directPay(
                 amount: $amount,
-                phone: $phone,
+                phone: $fapshiPhone, // Use normalized phone for Fapshi
+                medium: $medium, // Use detected operator
                 externalId: $payment->external_id,
                 userId: (string) $user->id,
                 message: "{$label} - {$address->sw_address}"
@@ -295,6 +302,72 @@ class FapshiService
             'proof_of_residence' => 'Attestation de Residence',
             default => 'Document',
         };
+    }
+
+    /**
+     * Normalize phone number for Fapshi API
+     * Fapshi expects 9 digits: 6XXXXXXXX (without country code)
+     */
+    protected function normalizePhoneForFapshi(string $phone): string
+    {
+        // Remove all non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+
+        // Remove country code 237 if present
+        if (str_starts_with($phone, '237') && strlen($phone) === 12) {
+            $phone = substr($phone, 3);
+        }
+
+        // Remove leading 0 if present
+        if (str_starts_with($phone, '0') && strlen($phone) === 10) {
+            $phone = substr($phone, 1);
+        }
+
+        return $phone;
+    }
+
+    /**
+     * Detect mobile operator from phone number
+     * MTN: 67X, 680-683, 650-654
+     * Orange: 69X, 655-659
+     *
+     * @return string 'mobile money' for MTN, 'orange money' for Orange, or null if invalid/unknown
+     */
+    protected function detectOperator(string $phone): string
+    {
+        // Normalize: remove spaces, dashes, parentheses, dots, and country code
+        $cleaned = preg_replace('/[\s\-().]+/', '', $phone);
+        $cleaned = preg_replace('/^(\+237|00237|237)/', '', $cleaned);
+
+        // Validate: 9 digits starting with 6
+        if (!preg_match('/^6[0-9]{8}$/', $cleaned)) {
+            return 'mobile money'; // Default to MTN for invalid numbers
+        }
+
+        $prefix2 = substr($cleaned, 0, 2);
+        $prefix3 = substr($cleaned, 0, 3);
+
+        // MTN: 67X, 680-683, 650-654
+        if ($prefix2 === '67') {
+            return 'mobile money';
+        }
+        if (in_array($prefix3, ['680', '681', '682', '683'])) {
+            return 'mobile money';
+        }
+        if (in_array($prefix3, ['650', '651', '652', '653', '654'])) {
+            return 'mobile money';
+        }
+
+        // Orange: 69X, 655-659
+        if ($prefix2 === '69') {
+            return 'orange money';
+        }
+        if (in_array($prefix3, ['655', '656', '657', '658', '659'])) {
+            return 'orange money';
+        }
+
+        // Unknown operator - default to MTN
+        return 'mobile money';
     }
 
     /**

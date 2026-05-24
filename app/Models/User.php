@@ -31,6 +31,8 @@ class User extends Authenticatable
         'cni_number',
         'cni_expiration_date',
         'avatar_path',
+        'lottie_avatar',
+        'signature',
         'is_admin',
         'deletion_requested_at',
         'deletion_scheduled_at',
@@ -65,6 +67,36 @@ class User extends Authenticatable
             return trim("{$this->first_name} {$this->last_name}");
         }
         return $this->attributes['name'] ?? '';
+    }
+
+    public function getInitialsAttribute(): string
+    {
+        $firstName = $this->first_name ?? '';
+        $lastName = $this->last_name ?? '';
+
+        if ($firstName || $lastName) {
+            $initials = '';
+            if ($firstName) {
+                $initials .= mb_strtoupper(mb_substr($firstName, 0, 1));
+            }
+            if ($lastName) {
+                $initials .= mb_strtoupper(mb_substr($lastName, 0, 1));
+            }
+            return $initials;
+        }
+
+        // Fallback to name field
+        $name = $this->attributes['name'] ?? '';
+        if ($name) {
+            $parts = explode(' ', $name);
+            $initials = mb_strtoupper(mb_substr($parts[0], 0, 1));
+            if (count($parts) > 1) {
+                $initials .= mb_strtoupper(mb_substr(end($parts), 0, 1));
+            }
+            return $initials;
+        }
+
+        return '?';
     }
 
     public function getNameAttribute($value): string

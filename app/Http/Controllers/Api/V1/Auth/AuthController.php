@@ -24,10 +24,17 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        // Normalize phone number
+        $phone = SmsService::normalizePhone($request->phone);
+
+        // Find user by phone (try multiple formats)
+        $user = User::where('phone', $phone)
+            ->orWhere('phone', $request->phone)
+            ->orWhere('phone', '+' . $phone)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->error('Invalid credentials', 401);
+            return $this->error('Identifiants invalides', 401);
         }
 
         $tokenData = $this->tokenService->createTokenPair(
@@ -41,11 +48,12 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
+        // Phone is already normalized by RegisterRequest::prepareForValidation()
         $user = User::create([
             'first_name' => $request->firstName,
             'last_name' => $request->lastName,
             'name' => $request->firstName . ' ' . $request->lastName,
-            'email' => $request->email,
+            'email' => $request->email, // Can be null
             'phone' => $request->phone,
             'password' => $request->password,
             'sex' => $request->civility,
