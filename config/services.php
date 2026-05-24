@@ -52,4 +52,9 @@ return [
         'token' => env('MAPBOX_ACCESS_TOKEN', ''),
     ],
 
+    'firebase' => [
+        'server_key' => env('FIREBASE_SERVER_KEY'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ],
+
 ];

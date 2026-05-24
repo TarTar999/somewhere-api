@@ -12,10 +12,12 @@ use Illuminate\Support\Collection;
 class NotificationService
 {
     protected SmsService $smsService;
+    protected PushNotificationService $pushService;
 
-    public function __construct(SmsService $smsService)
+    public function __construct(SmsService $smsService, PushNotificationService $pushService)
     {
         $this->smsService = $smsService;
+        $this->pushService = $pushService;
     }
 
     /**
@@ -47,6 +49,11 @@ class NotificationService
             'type' => $type,
             'title' => $title,
         ]);
+
+        // Envoyer push notification (par défaut activé)
+        if ($options['send_push'] ?? true) {
+            $this->sendPushNotification($user, $notification);
+        }
 
         // Envoyer par SMS si demandé
         if ($options['send_sms'] ?? false) {
@@ -311,6 +318,14 @@ class NotificationService
     public function getUnreadCount(User $user): int
     {
         return Notification::where('user_id', $user->id)->unread()->count();
+    }
+
+    /**
+     * Envoyer une push notification
+     */
+    protected function sendPushNotification(User $user, Notification $notification): array
+    {
+        return $this->pushService->sendToUser($user, $notification);
     }
 
     /**

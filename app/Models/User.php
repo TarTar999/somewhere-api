@@ -239,4 +239,14 @@ class User extends Authenticatable
     {
         return $this->unreadNotifications()->count();
     }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
+    public function activeDeviceTokens(): HasMany
+    {
+        return $this->deviceTokens()->where('is_active', true);
+    }
 }

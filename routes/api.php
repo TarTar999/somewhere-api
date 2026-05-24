@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Auth\ProfileController;
 use App\Http\Controllers\Api\V1\CollectionAddressController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\DeliveryRequestController;
+use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DomiciliationController;
 use App\Http\Controllers\Api\V1\InvoiceController;
@@ -319,5 +320,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('{notification}', [NotificationController::class, 'show']);
         Route::post('{notification}/read', [NotificationController::class, 'markAsRead']);
         Route::delete('{notification}', [NotificationController::class, 'destroy']);
+    });
+
+    // Device Tokens (Push Notifications)
+    Route::prefix('device-tokens')->group(function () {
+        Route::get('/', [DeviceTokenController::class, 'index']);
+        Route::post('register', [DeviceTokenController::class, 'register']);
+        Route::post('unregister', [DeviceTokenController::class, 'unregister']);
+        Route::delete('all', [DeviceTokenController::class, 'destroyAll']);
+        Route::delete('{id}', [DeviceTokenController::class, 'destroy']);
     });
 });
