@@ -41,7 +41,7 @@ class AccountController extends Controller
         // Check if deletion already requested
         if ($user->hasPendingDeletion()) {
             return $this->error('Account deletion already requested', 400, [
-                'deletionScheduledAt' => $user->deletion_scheduled_at?->toISOString(),
+                'deletionScheduledAt' => $user->deletion_scheduled_at?->toIso8601String(),
             ]);
         }
 
@@ -55,8 +55,8 @@ class AccountController extends Controller
         ]);
 
         return $this->success([
-            'deletionRequestedAt' => now()->toISOString(),
-            'deletionScheduledAt' => $deletionDate->toISOString(),
+            'deletionRequestedAt' => now()->toIso8601String(),
+            'deletionScheduledAt' => $deletionDate->toIso8601String(),
             'message' => 'Your account is scheduled for deletion. You can cancel this request within 30 days.',
         ], 'Account deletion requested');
     }
@@ -149,8 +149,8 @@ class AccountController extends Controller
 
         return $this->success([
             'hasPendingDeletion' => true,
-            'deletionRequestedAt' => $user->deletion_requested_at?->toISOString(),
-            'deletionScheduledAt' => $user->deletion_scheduled_at?->toISOString(),
+            'deletionRequestedAt' => $user->deletion_requested_at?->toIso8601String(),
+            'deletionScheduledAt' => $user->deletion_scheduled_at?->toIso8601String(),
             'daysUntilDeletion' => $user->deletion_scheduled_at?->diffInDays(now()),
             'reason' => $user->deletion_reason,
         ], 'Deletion pending');
@@ -185,7 +185,7 @@ class AccountController extends Controller
                 'sex' => $user->sex,
                 'cniNumber' => $user->cni_number,
                 'nuiNumber' => $user->nui_number,
-                'createdAt' => $user->created_at->toISOString(),
+                'createdAt' => $user->created_at->toIso8601String(),
             ],
             'settings' => $user->settings,
             'addresses' => $user->addresses->map(fn($a) => [
@@ -196,7 +196,7 @@ class AccountController extends Controller
                 'quarter' => $a->quarter,
                 'subQuarter' => $a->sub_quarter,
                 'lieuDit' => $a->lieu_dit,
-                'createdAt' => $a->created_at->toISOString(),
+                'createdAt' => $a->created_at->toIso8601String(),
             ]),
             'collections' => $user->collections->map(fn($c) => [
                 'name' => $c->name,
@@ -208,7 +208,7 @@ class AccountController extends Controller
                 'amount' => $p->amount,
                 'currency' => $p->currency,
                 'status' => $p->status,
-                'paidAt' => $p->paid_at?->toISOString(),
+                'paidAt' => $p->paid_at?->toIso8601String(),
             ]),
             'invoices' => $user->invoices->map(fn($i) => [
                 'invoiceNumber' => $i->invoice_number,
@@ -220,10 +220,10 @@ class AccountController extends Controller
             'proofOfLocations' => $user->proofOfLocations->map(fn($p) => [
                 'documentNumber' => $p->document_number,
                 'status' => $p->status,
-                'issuedAt' => $p->issued_at->toISOString(),
-                'expiresAt' => $p->expires_at->toISOString(),
+                'issuedAt' => $p->issued_at->toIso8601String(),
+                'expiresAt' => $p->expires_at->toIso8601String(),
             ]),
-            'exportedAt' => now()->toISOString(),
+            'exportedAt' => now()->toIso8601String(),
         ];
 
         return $this->success($data, 'Data exported successfully');

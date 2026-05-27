@@ -138,7 +138,7 @@ class ProfileController extends Controller
             'sex' => $user->sex,
             'nuiNumber' => $user->nui_number,
             'cniNumber' => $user->cni_number,
-            'cniExpirationDate' => $user->cni_expiration_date?->toISOString(),
+            'cniExpirationDate' => $user->cni_expiration_date?->toIso8601String(),
             'lottieAvatar' => $user->lottie_avatar,
             'hasSignature' => !empty($user->signature),
             'settings' => $user->settings ? [
@@ -147,7 +147,7 @@ class ProfileController extends Controller
                 'notifications' => $user->settings->notifications,
                 'mapType' => $user->settings->map_type,
                 'proofOfResidence' => $user->settings->proof_of_residence,
-                'proofOfResidenceDate' => $user->settings->proof_of_residence_date?->toISOString(),
+                'proofOfResidenceDate' => $user->settings->proof_of_residence_date?->toIso8601String(),
                 'googleSearch' => $user->settings->google_search,
                 'isCityMapper' => $user->settings->is_city_mapper,
                 'darkMode' => $user->settings->dark_mode,

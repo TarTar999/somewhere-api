@@ -71,7 +71,7 @@ class WebAccessController extends Controller
 
         $responseData = [
             'type' => $webToken->type,
-            'expiresAt' => $webToken->expires_at->toISOString(),
+            'expiresAt' => $webToken->expires_at->toIso8601String(),
             'user' => [
                 'id' => $webToken->user->id,
                 'firstName' => $webToken->user->first_name,
@@ -91,8 +91,8 @@ class WebAccessController extends Controller
                             'swAddress' => $resource->address->sw_address,
                             'displayName' => $resource->address->display_name,
                         ],
-                        'issuedAt' => $resource->issued_at->toISOString(),
-                        'expiresAt' => $resource->expires_at->toISOString(),
+                        'issuedAt' => $resource->issued_at->toIso8601String(),
+                        'expiresAt' => $resource->expires_at->toIso8601String(),
                     ];
                 }
                 break;
@@ -134,7 +134,7 @@ class WebAccessController extends Controller
                     'recentProofs' => $user->proofOfLocations->map(fn($p) => [
                         'documentNumber' => $p->document_number,
                         'status' => $p->status,
-                        'expiresAt' => $p->expires_at->toISOString(),
+                        'expiresAt' => $p->expires_at->toIso8601String(),
                     ]),
                     'recentInvoices' => $user->invoices->map(fn($i) => [
                         'invoiceNumber' => $i->invoice_number,

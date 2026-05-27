@@ -179,7 +179,7 @@ class CollectionController extends Controller
                     'id' => $shared->id,
                     'user' => $this->formatUserForShare($shared->sharedWithUser),
                     'permissions' => $shared->permissions,
-                    'sharedAt' => $shared->created_at?->toISOString(),
+                    'sharedAt' => $shared->created_at?->toIso8601String(),
                 ];
             });
 
@@ -237,8 +237,8 @@ class CollectionController extends Controller
                 'latLon' => $a->lat_lon,
                 'verificationStatus' => $a->verification_status,
             ]),
-            'createdAt' => $collection->created_at?->toISOString(),
-            'updatedAt' => $collection->updated_at?->toISOString(),
+            'createdAt' => $collection->created_at?->toIso8601String(),
+            'updatedAt' => $collection->updated_at?->toIso8601String(),
         ];
     }
 

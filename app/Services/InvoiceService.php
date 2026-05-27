@@ -115,11 +115,11 @@ class InvoiceService
             'totalAmount' => $invoice->total_amount,
             'invoiceDate' => $invoice->invoice_date->toDateString(),
             'dueDate' => $invoice->due_date?->toDateString(),
-            'paidAt' => $invoice->paid_at?->toISOString(),
+            'paidAt' => $invoice->paid_at?->toIso8601String(),
             'isPaid' => $invoice->isPaid(),
             'webUrl' => $invoice->getWebUrl(),
             'downloadUrl' => route('api.invoices.download', $invoice->id),
-            'createdAt' => $invoice->created_at->toISOString(),
+            'createdAt' => $invoice->created_at->toIso8601String(),
         ];
     }
 }

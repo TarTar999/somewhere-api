@@ -102,7 +102,7 @@ class QrCodeService
             'documentNumber' => $proof->document_number,
             'token' => $proof->qr_code_token,
             'url' => $proof->getWebUrl(),
-            'validUntil' => $proof->expires_at->toISOString(),
+            'validUntil' => $proof->expires_at->toIso8601String(),
             'version' => '1.0',
         ]);
 
@@ -128,7 +128,7 @@ class QrCodeService
             'type' => 'somewhere_web_access',
             'accessType' => $token->type,
             'url' => $webUrl,
-            'expiresAt' => $token->expires_at->toISOString(),
+            'expiresAt' => $token->expires_at->toIso8601String(),
             'version' => '1.0',
         ]);
 
@@ -154,7 +154,7 @@ class QrCodeService
             'type' => 'somewhere_web_access',
             'accessType' => $token->type,
             'url' => $webUrl,
-            'expiresAt' => $token->expires_at->toISOString(),
+            'expiresAt' => $token->expires_at->toIso8601String(),
             'version' => '1.0',
         ]);
 

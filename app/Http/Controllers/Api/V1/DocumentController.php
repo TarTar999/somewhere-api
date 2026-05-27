@@ -169,8 +169,8 @@ class DocumentController extends Controller
                 'documentType' => $proof->document_type,
                 'documentTypeLabel' => $proof->document_type_label,
                 'documentNumber' => $proof->document_number,
-                'issuedAt' => $proof->issued_at->toISOString(),
-                'expiresAt' => $proof->expires_at->toISOString(),
+                'issuedAt' => $proof->issued_at->toIso8601String(),
+                'expiresAt' => $proof->expires_at->toIso8601String(),
                 'status' => $proof->status,
                 'isActive' => $proof->isActive(),
                 'isExpired' => $proof->isExpired(),
@@ -185,7 +185,7 @@ class DocumentController extends Controller
                 'documentType' => 'invoice',
                 'documentTypeLabel' => 'Facture',
                 'documentNumber' => $invoice->invoice_number,
-                'issuedAt' => $invoice->created_at->toISOString(),
+                'issuedAt' => $invoice->created_at->toIso8601String(),
                 'amount' => $invoice->total_amount,
                 'currency' => $invoice->currency,
             ]);
@@ -199,7 +199,7 @@ class DocumentController extends Controller
                 'documentType' => 'receipt',
                 'documentTypeLabel' => 'Recu',
                 'documentNumber' => $receipt->receipt_number,
-                'issuedAt' => $receipt->paid_at->toISOString(),
+                'issuedAt' => $receipt->paid_at->toIso8601String(),
                 'amount' => $receipt->amount,
                 'currency' => $receipt->currency,
             ]);
@@ -305,10 +305,10 @@ class DocumentController extends Controller
                 'swAddress' => $proof->address->sw_address,
                 'displayName' => $proof->address->display_name,
             ] : null,
-            'issuedAt' => $proof->issued_at->toISOString(),
-            'expiresAt' => $proof->expires_at->toISOString(),
+            'issuedAt' => $proof->issued_at->toIso8601String(),
+            'expiresAt' => $proof->expires_at->toIso8601String(),
             'downloadUrl' => "/api/documents/{$proof->document_type}/{$proof->id}/download",
-            'createdAt' => $proof->created_at->toISOString(),
+            'createdAt' => $proof->created_at->toIso8601String(),
         ];
     }
 
@@ -331,10 +331,10 @@ class DocumentController extends Controller
             'taxAmount' => $invoice->tax_amount,
             'totalAmount' => $invoice->total_amount,
             'currency' => $invoice->currency,
-            'invoiceDate' => $invoice->invoice_date->toISOString(),
-            'paidAt' => $invoice->paid_at?->toISOString(),
+            'invoiceDate' => $invoice->invoice_date->toIso8601String(),
+            'paidAt' => $invoice->paid_at?->toIso8601String(),
             'downloadUrl' => "/api/documents/invoice/{$invoice->id}/download",
-            'createdAt' => $invoice->created_at->toISOString(),
+            'createdAt' => $invoice->created_at->toIso8601String(),
         ];
     }
 
@@ -354,9 +354,9 @@ class DocumentController extends Controller
             'amount' => $receipt->amount,
             'currency' => $receipt->currency,
             'paymentMethod' => $receipt->payment_method,
-            'paidAt' => $receipt->paid_at->toISOString(),
+            'paidAt' => $receipt->paid_at->toIso8601String(),
             'downloadUrl' => "/api/documents/receipt/{$receipt->id}/download",
-            'createdAt' => $receipt->created_at->toISOString(),
+            'createdAt' => $receipt->created_at->toIso8601String(),
         ];
     }
 }

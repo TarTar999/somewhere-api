@@ -166,8 +166,8 @@ class Notification extends Model
             'action_url' => $this->action_url,
             'action_type' => $this->action_type,
             'is_read' => $this->isRead(),
-            'read_at' => $this->read_at?->toISOString(),
-            'created_at' => $this->created_at->toISOString(),
+            'read_at' => $this->read_at?->toIso8601String(),
+            'created_at' => $this->created_at->toIso8601String(),
         ];
     }
 }

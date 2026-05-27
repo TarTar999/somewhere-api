@@ -222,8 +222,8 @@ class TrackController extends Controller
             'isPublic' => $track->is_public,
             'shareToken' => $track->share_token,
             'shareUrl' => url("/tracks/shared/{$track->share_token}"),
-            'createdAt' => $track->created_at->toISOString(),
-            'updatedAt' => $track->updated_at->toISOString(),
+            'createdAt' => $track->created_at->toIso8601String(),
+            'updatedAt' => $track->updated_at->toIso8601String(),
         ];
 
         if ($isShared) {

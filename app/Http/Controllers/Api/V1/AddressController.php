@@ -642,8 +642,8 @@ class AddressController extends Controller
             'description' => $address->description,
             'verificationStatus' => $address->verification_status,
             'shareUrl' => $address->getShareUrl(),
-            'createdAt' => $address->created_at->toISOString(),
-            'updatedAt' => $address->updated_at->toISOString(),
+            'createdAt' => $address->created_at->toIso8601String(),
+            'updatedAt' => $address->updated_at->toIso8601String(),
         ];
 
         // Add itinerary data if present

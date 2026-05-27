@@ -53,7 +53,7 @@ class ProofOfResidenceService
             'path' => $path,
             'filename' => $filename,
             'document_number' => $documentNumber,
-            'generated_at' => now()->toISOString(),
+            'generated_at' => now()->toIso8601String(),
         ];
     }
 

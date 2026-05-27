@@ -123,7 +123,7 @@ class PaymentController extends Controller
                 'currency' => $pendingPayment->currency,
                 'documentType' => $documentType,
                 'status' => 'pending',
-                'expiresAt' => $pendingPayment->expires_at?->toISOString(),
+                'expiresAt' => $pendingPayment->expires_at?->toIso8601String(),
             ], 'Existing pending payment found');
         }
 
@@ -151,7 +151,7 @@ class PaymentController extends Controller
             'currency' => $payment->currency,
             'documentType' => $documentType,
             'status' => $payment->status,
-            'expiresAt' => $payment->expires_at?->toISOString(),
+            'expiresAt' => $payment->expires_at?->toIso8601String(),
         ], 'Payment initiated');
     }
 
@@ -286,9 +286,9 @@ class PaymentController extends Controller
             'currency' => $payment->currency,
             'status' => $payment->status,
             'paymentLink' => $payment->payment_link,
-            'paidAt' => $payment->paid_at?->toISOString(),
+            'paidAt' => $payment->paid_at?->toIso8601String(),
             'failureReason' => $payment->failure_reason,
-            'createdAt' => $payment->created_at->toISOString(),
+            'createdAt' => $payment->created_at->toIso8601String(),
         ];
 
         // If successful and document type, include document data
@@ -328,8 +328,8 @@ class PaymentController extends Controller
                 'swAddress' => $p->address->sw_address,
                 'displayName' => $p->address->display_name,
             ] : null,
-            'paidAt' => $p->paid_at?->toISOString(),
-            'createdAt' => $p->created_at->toISOString(),
+            'paidAt' => $p->paid_at?->toIso8601String(),
+            'createdAt' => $p->created_at->toIso8601String(),
         ]);
 
         return $this->paginated($payments, 'Payments retrieved');

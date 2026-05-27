@@ -215,7 +215,7 @@ class DomiciliationController extends Controller
             'address_id' => $addressId,
             'invited_by' => $user->id,
             'token' => $token,
-            'expires_at' => $expiresAt->toISOString(),
+            'expires_at' => $expiresAt->toIso8601String(),
         ];
 
         // Store in cache for later retrieval
@@ -232,7 +232,7 @@ class DomiciliationController extends Controller
         return $this->success([
             'token' => $token,
             'qrCode' => $qrCodeUrl,
-            'expiresAt' => $expiresAt->toISOString(),
+            'expiresAt' => $expiresAt->toIso8601String(),
             'addressId' => $addressId,
         ], 'Invitation QR code generated successfully');
     }
@@ -343,7 +343,7 @@ class DomiciliationController extends Controller
                 'role' => $d->role,
                 'isPrimary' => $d->is_primary,
                 'invitedBy' => $d->invited_by,
-                'createdAt' => $d->created_at->toISOString(),
+                'createdAt' => $d->created_at->toIso8601String(),
                 'user' => [
                     'id' => $d->user->id,
                     'fullName' => $d->user->full_name,
@@ -412,8 +412,8 @@ class DomiciliationController extends Controller
                 'fullName' => $domiciliation->invitedBy->full_name,
             ] : null,
             'address' => $domiciliation->address ? $this->formatAddress($domiciliation->address) : null,
-            'createdAt' => $domiciliation->created_at->toISOString(),
-            'updatedAt' => $domiciliation->updated_at->toISOString(),
+            'createdAt' => $domiciliation->created_at->toIso8601String(),
+            'updatedAt' => $domiciliation->updated_at->toIso8601String(),
         ];
     }
 

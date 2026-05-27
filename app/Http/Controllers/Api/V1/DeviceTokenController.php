@@ -44,7 +44,7 @@ class DeviceTokenController extends Controller
             'id' => $deviceToken->id,
             'platform' => $deviceToken->platform,
             'device_name' => $deviceToken->device_name,
-            'registered_at' => $deviceToken->created_at->toISOString(),
+            'registered_at' => $deviceToken->created_at->toIso8601String(),
         ], 'Token enregistré avec succès');
     }
 
@@ -82,8 +82,8 @@ class DeviceTokenController extends Controller
                 'os_version' => $token->os_version,
                 'app_version' => $token->app_version,
                 'is_active' => $token->is_active,
-                'last_used_at' => $token->last_used_at?->toISOString(),
-                'created_at' => $token->created_at->toISOString(),
+                'last_used_at' => $token->last_used_at?->toIso8601String(),
+                'created_at' => $token->created_at->toIso8601String(),
             ]);
 
         return $this->success($tokens);

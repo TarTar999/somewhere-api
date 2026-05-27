@@ -89,7 +89,7 @@ class TokenService
             'lottieAvatar' => $user->lottie_avatar,
             'nuiNumber' => $user->nui_number,
             'cniNumber' => $user->cni_number,
-            'cniExpirationDate' => $user->cni_expiration_date?->toISOString(),
+            'cniExpirationDate' => $user->cni_expiration_date?->toIso8601String(),
             'hasSignature' => !empty($user->signature),
             'settings' => $user->settings ? [
                 'language' => $user->settings->language,
@@ -97,7 +97,7 @@ class TokenService
                 'notifications' => $user->settings->notifications,
                 'mapType' => $user->settings->map_type,
                 'proofOfResidence' => $user->settings->proof_of_residence,
-                'proofOfResidenceDate' => $user->settings->proof_of_residence_date?->toISOString(),
+                'proofOfResidenceDate' => $user->settings->proof_of_residence_date?->toIso8601String(),
                 'googleSearch' => $user->settings->google_search,
                 'isCityMapper' => $user->settings->is_city_mapper,
                 'darkMode' => $user->settings->dark_mode,
@@ -124,8 +124,8 @@ class TokenService
             'homeStatus' => $address->home_status,
             'description' => $address->description,
             'verificationStatus' => $address->verification_status,
-            'createdAt' => $address->created_at->toISOString(),
-            'updatedAt' => $address->updated_at->toISOString(),
+            'createdAt' => $address->created_at->toIso8601String(),
+            'updatedAt' => $address->updated_at->toIso8601String(),
         ];
     }
 
@@ -142,8 +142,8 @@ class TokenService
             'isPublic' => $track->is_public,
             'shareToken' => $track->share_token,
             'shareUrl' => url("/api/tracks/shared/{$track->share_token}"),
-            'createdAt' => $track->created_at->toISOString(),
-            'updatedAt' => $track->updated_at->toISOString(),
+            'createdAt' => $track->created_at->toIso8601String(),
+            'updatedAt' => $track->updated_at->toIso8601String(),
         ];
 
         if ($isShared) {

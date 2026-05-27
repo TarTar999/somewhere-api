@@ -205,15 +205,15 @@ class ProofOfLocationService
                 'swAddress' => $proof->address->sw_address ?? null,
                 'displayName' => $proof->address->display_name ?? null,
             ],
-            'issuedAt' => $proof->issued_at->toISOString(),
-            'expiresAt' => $proof->expires_at->toISOString(),
+            'issuedAt' => $proof->issued_at->toIso8601String(),
+            'expiresAt' => $proof->expires_at->toIso8601String(),
             'daysUntilExpiry' => $proof->expires_at->diffInDays(now()),
             'downloadUrl' => route('api.proof-of-location.download', ['id' => $proof->id]),
             'webUrl' => $proof->getWebUrl(),
             'qrCodeData' => $proof->getQrCodeData(),
             'downloadCount' => $proof->download_count,
             'qrScanCount' => $proof->qr_scan_count,
-            'createdAt' => $proof->created_at->toISOString(),
+            'createdAt' => $proof->created_at->toIso8601String(),
         ];
     }
 

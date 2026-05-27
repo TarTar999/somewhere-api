@@ -109,7 +109,7 @@ class DeliveryRequestController extends Controller
                 'firstName' => $deliveryRequest->initiator->first_name,
                 'lastName' => substr($deliveryRequest->initiator->last_name, 0, 1) . '.',
             ],
-            'createdAt' => $deliveryRequest->created_at?->toISOString(),
+            'createdAt' => $deliveryRequest->created_at?->toIso8601String(),
         ]);
     }
 
@@ -276,10 +276,10 @@ class DeliveryRequestController extends Controller
                 'displayName' => $request->deliveryAddress->display_name,
                 'latLon' => $request->deliveryAddress->lat_lon,
             ] : null,
-            'createdAt' => $request->created_at?->toISOString(),
-            'updatedAt' => $request->updated_at?->toISOString(),
-            'acceptedAt' => $request->accepted_at?->toISOString(),
-            'completedAt' => $request->completed_at?->toISOString(),
+            'createdAt' => $request->created_at?->toIso8601String(),
+            'updatedAt' => $request->updated_at?->toIso8601String(),
+            'acceptedAt' => $request->accepted_at?->toIso8601String(),
+            'completedAt' => $request->completed_at?->toIso8601String(),
         ];
     }
 

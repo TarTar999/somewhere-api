@@ -86,7 +86,7 @@ class NotificationService
                     'document_id' => $document->id,
                     'document_type' => $document->document_type,
                     'address_id' => $document->address_id,
-                    'expires_at' => $document->expires_at->toISOString(),
+                    'expires_at' => $document->expires_at->toIso8601String(),
                     'days_until_expiry' => $daysUntilExpiry,
                 ],
             ]
@@ -116,7 +116,7 @@ class NotificationService
                     'document_id' => $document->id,
                     'document_type' => $document->document_type,
                     'address_id' => $document->address_id,
-                    'expired_at' => $document->expires_at->toISOString(),
+                    'expired_at' => $document->expires_at->toIso8601String(),
                 ],
             ]
         );

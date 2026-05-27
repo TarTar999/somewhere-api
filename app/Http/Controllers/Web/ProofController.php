@@ -58,8 +58,8 @@ class ProofController extends Controller
                 'swAddress' => $proof->address->sw_address,
                 'displayName' => $proof->address->display_name,
             ],
-            'issuedAt' => $proof->issued_at->toISOString(),
-            'expiresAt' => $proof->expires_at->toISOString(),
+            'issuedAt' => $proof->issued_at->toIso8601String(),
+            'expiresAt' => $proof->expires_at->toIso8601String(),
         ]);
     }
 

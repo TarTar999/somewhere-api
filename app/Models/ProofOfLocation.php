@@ -205,7 +205,7 @@ class ProofOfLocation extends Model
         return [
             'url' => $this->getWebUrl(),
             'document_number' => $this->document_number,
-            'valid_until' => $this->expires_at->toISOString(),
+            'valid_until' => $this->expires_at->toIso8601String(),
         ];
     }
 

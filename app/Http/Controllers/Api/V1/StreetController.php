@@ -195,7 +195,7 @@ class StreetController extends Controller
             'boundingBox' => $street->bounding_box,
             'startPoint' => $street->start_point,
             'endPoint' => $street->end_point,
-            'createdAt' => $street->created_at->toISOString(),
+            'createdAt' => $street->created_at->toIso8601String(),
         ];
     }
 }

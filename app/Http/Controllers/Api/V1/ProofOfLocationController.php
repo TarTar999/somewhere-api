@@ -142,8 +142,8 @@ class ProofOfLocationController extends Controller
                 'quarter' => $proof->address->quarter,
                 'subQuarter' => $proof->address->sub_quarter,
             ],
-            'issuedAt' => $proof->issued_at->toISOString(),
-            'expiresAt' => $proof->expires_at->toISOString(),
+            'issuedAt' => $proof->issued_at->toIso8601String(),
+            'expiresAt' => $proof->expires_at->toIso8601String(),
             'verificationUrl' => route('web.proof.verify', ['token' => $token]),
         ], 'Proof of location verified');
     }

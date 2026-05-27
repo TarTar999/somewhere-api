@@ -32,7 +32,7 @@ class OtpController extends Controller
         }
 
         $response = [
-            'expiresAt' => $otp->expires_at->toISOString(),
+            'expiresAt' => $otp->expires_at->toIso8601String(),
         ];
 
         // In development, include the code for testing

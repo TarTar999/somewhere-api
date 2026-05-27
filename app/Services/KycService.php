@@ -207,11 +207,11 @@ class KycService
                 'address' => $kyc->address_verified,
             ],
             'rejectionReason' => $kyc->rejection_reason,
-            'reviewedAt' => $kyc->reviewed_at?->toISOString(),
-            'approvedAt' => $kyc->approved_at?->toISOString(),
-            'expiresAt' => $kyc->expires_at?->toISOString(),
-            'createdAt' => $kyc->created_at->toISOString(),
-            'updatedAt' => $kyc->updated_at->toISOString(),
+            'reviewedAt' => $kyc->reviewed_at?->toIso8601String(),
+            'approvedAt' => $kyc->approved_at?->toIso8601String(),
+            'expiresAt' => $kyc->expires_at?->toIso8601String(),
+            'createdAt' => $kyc->created_at->toIso8601String(),
+            'updatedAt' => $kyc->updated_at->toIso8601String(),
         ];
     }
 

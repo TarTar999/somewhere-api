@@ -122,7 +122,7 @@ class AuthController extends Controller
             // In production, don't reveal if user exists
             if (config('app.env') !== 'local') {
                 return $this->success([
-                    'expiresAt' => now()->addMinutes(10)->toISOString(),
+                    'expiresAt' => now()->addMinutes(10)->toIso8601String(),
                 ], 'If this phone number is registered, you will receive an OTP');
             }
             // In development, still send OTP for testing
@@ -145,7 +145,7 @@ class AuthController extends Controller
         }
 
         $response = [
-            'expiresAt' => $otp->expires_at->toISOString(),
+            'expiresAt' => $otp->expires_at->toIso8601String(),
         ];
 
         // In development, include the code for testing

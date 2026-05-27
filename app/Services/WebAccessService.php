@@ -120,7 +120,7 @@ class WebAccessService
             'token' => $token->token,
             'url' => $webUrl,
             'type' => $token->type,
-            'expiresAt' => $token->expires_at->toISOString(),
+            'expiresAt' => $token->expires_at->toIso8601String(),
             'validityMinutes' => $token->expires_at->diffInMinutes(now()),
         ];
     }
