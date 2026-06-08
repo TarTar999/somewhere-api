@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\User\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -25,9 +26,7 @@ Route::prefix('share')->name('share.')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__.'/settings.php';
