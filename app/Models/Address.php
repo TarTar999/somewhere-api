@@ -33,6 +33,8 @@ class Address extends Model
         'way_code',
         'way_display_name',
         'honor_declaration',
+        'resident_name',
+        'is_non_habitation',
         'signature',
         'verification_status',
         'video_path',
@@ -50,6 +52,7 @@ class Address extends Model
             'longitude' => 'decimal:8',
             'accuracy' => 'float',
             'honor_declaration' => 'boolean',
+            'is_non_habitation' => 'boolean',
             'itinerary' => 'array',
         ];
     }

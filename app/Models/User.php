@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Observers\UserObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'deletion_requested_at',
         'deletion_scheduled_at',
         'deletion_reason',
+        'current_company_id',
     ];
 
     protected $hidden = [
@@ -248,5 +250,78 @@ class User extends Authenticatable
     public function activeDeviceTokens(): HasMany
     {
         return $this->deviceTokens()->where('is_active', true);
+    }
+
+    // Company relationships
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class)
+            ->withPivot(['role', 'status', 'invited_by', 'invitation_token', 'invitation_expires_at', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    public function activeCompanies(): BelongsToMany
+    {
+        return $this->companies()->wherePivot('status', 'active');
+    }
+
+    public function currentCompany(): BelongsTo
+    {
+        return $this->belongsTo(Company::class, 'current_company_id');
+    }
+
+    public function hasCompanyAccess(): bool
+    {
+        $company = $this->currentCompany;
+        if (!$company) {
+            return false;
+        }
+
+        return $company->isActive() && $company->hasActiveSubscription();
+    }
+
+    public function getCompanyRole(?Company $company = null): ?string
+    {
+        $company = $company ?? $this->currentCompany;
+        if (!$company) {
+            return null;
+        }
+
+        $pivot = $this->companies()->where('company_id', $company->id)->first();
+        return $pivot?->pivot->role;
+    }
+
+    public function isCompanyAdmin(?Company $company = null): bool
+    {
+        return $this->getCompanyRole($company) === 'admin';
+    }
+
+    public function isCompanyManager(?Company $company = null): bool
+    {
+        return in_array($this->getCompanyRole($company), ['admin', 'manager']);
+    }
+
+    public function canCreateCompanyDocument(): bool
+    {
+        if (!$this->hasCompanyAccess()) {
+            return false;
+        }
+
+        return $this->currentCompany->canCreateDocument();
+    }
+
+    public function switchCompany(Company $company): bool
+    {
+        $membership = $this->companies()
+            ->where('company_id', $company->id)
+            ->wherePivot('status', 'active')
+            ->first();
+
+        if (!$membership) {
+            return false;
+        }
+
+        $this->update(['current_company_id' => $company->id]);
+        return true;
     }
 }

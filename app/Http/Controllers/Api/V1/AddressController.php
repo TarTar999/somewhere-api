@@ -114,6 +114,11 @@ class AddressController extends Controller
             $user, $street, $streetNumber, $distanceOnStreet, $streetSide,
             $swAddress, $request, $signaturePath, $videoPath, &$address, &$domiciliation
         ) {
+            // Determine honor_declaration value based on conditions
+            $isNonHabitation = filter_var($request->isNonHabitation ?? false, FILTER_VALIDATE_BOOLEAN);
+            $residentName = $request->residentName;
+            $honorDeclaration = filter_var($request->honorDeclaration ?? false, FILTER_VALIDATE_BOOLEAN) || !empty($residentName);
+
             $address = Address::create([
                 'user_id' => $user->id,
                 'street_id' => $street?->id,
@@ -132,7 +137,9 @@ class AddressController extends Controller
                 'lieu_dit' => $request->lieuDit,
                 'description' => $request->description,
                 'official_address' => $request->officialAddress,
-                'honor_declaration' => true,
+                'honor_declaration' => $honorDeclaration,
+                'resident_name' => $residentName,
+                'is_non_habitation' => $isNonHabitation,
                 'signature' => $signaturePath,
                 'video_path' => $videoPath,
                 'verification_status' => 'pending',
@@ -232,6 +239,12 @@ class AddressController extends Controller
         }
         if ($request->has('description')) {
             $data['description'] = $request->description;
+        }
+        if ($request->has('residentName')) {
+            $data['resident_name'] = $request->residentName;
+        }
+        if ($request->has('isNonHabitation')) {
+            $data['is_non_habitation'] = filter_var($request->isNonHabitation, FILTER_VALIDATE_BOOLEAN);
         }
 
         $address->update($data);
@@ -639,6 +652,9 @@ class AddressController extends Controller
             'way' => $address->way,
             'houseType' => $address->house_type,
             'homeStatus' => $address->home_status,
+            'isNonHabitation' => $address->is_non_habitation,
+            'residentName' => $address->resident_name,
+            'honorDeclaration' => $address->honor_declaration,
             'description' => $address->description,
             'verificationStatus' => $address->verification_status,
             'shareUrl' => $address->getShareUrl(),

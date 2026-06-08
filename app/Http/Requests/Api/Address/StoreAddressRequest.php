@@ -17,8 +17,8 @@ class StoreAddressRequest extends FormRequest
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'accuracy' => ['nullable', 'numeric', 'min:0'],
-            'houseType' => ['required', 'in:immeuble,villa,maison,studio,bureau,autre'],
-            'homeStatus' => ['required', 'in:locataire,residence,familiale,proprietaire,commercial'],
+            'houseType' => ['required', 'in:immeuble,villa,maison,studio,bureau,terrain,autre'],
+            'homeStatus' => ['required', 'in:locataire,residence,familiale,proprietaire,commercial,non_bati'],
             'quarter' => ['required', 'string', 'max:255'],
             'subQuarter' => ['nullable', 'string', 'max:255'],
             'lieuDit' => ['nullable', 'string', 'max:255'],
@@ -32,7 +32,31 @@ class StoreAddressRequest extends FormRequest
             'streetData.address' => ['nullable', 'array'],
             'streetData.geojson' => ['nullable', 'array'],
             'streetData.boundingbox' => ['nullable', 'array'],
-            'honorDeclaration' => ['required', 'accepted'],
+            // Non-habitation fields
+            'isNonHabitation' => ['nullable', 'boolean'],
+            'residentName' => ['nullable', 'string', 'max:255'],
+            // Honor declaration - conditionally required
+            'honorDeclaration' => [
+                function ($attribute, $value, $fail) {
+                    $isNonHabitation = filter_var($this->input('isNonHabitation', false), FILTER_VALIDATE_BOOLEAN);
+                    $residentName = $this->input('residentName');
+
+                    // If non-habitation, no declaration required
+                    if ($isNonHabitation) {
+                        return;
+                    }
+
+                    // If resident name provided, declaration is implicit
+                    if (!empty($residentName)) {
+                        return;
+                    }
+
+                    // Otherwise, honor declaration is required
+                    if (!filter_var($value, FILTER_VALIDATE_BOOLEAN)) {
+                        $fail('Une déclaration sur l\'honneur est requise pour les habitations.');
+                    }
+                },
+            ],
             'signature' => ['required', 'string'],
             'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,3gp', 'mimetypes:video/mp4,video/quicktime,video/avi,video/webm,video/3gpp', 'max:50000'],
             // Domiciliation options
@@ -46,12 +70,12 @@ class StoreAddressRequest extends FormRequest
         return [
             'latitude.required' => 'La latitude est requise.',
             'longitude.required' => 'La longitude est requise.',
-            'houseType.required' => 'Le type d\'habitation est requis.',
+            'houseType.required' => 'Le type de lieu est requis.',
             'homeStatus.required' => 'Le statut d\'occupation est requis.',
             'quarter.required' => 'Le quartier est requis.',
-            'honorDeclaration.accepted' => 'Vous devez accepter la déclaration sur l\'honneur.',
             'signature.required' => 'La signature est requise.',
-            'video.max' => 'La vidéo ne doit pas dépasser 100 Mo.',
+            'video.max' => 'La vidéo ne doit pas dépasser 50 Mo.',
+            'residentName.max' => 'Le nom du résident ne doit pas dépasser 255 caractères.',
         ];
     }
 }

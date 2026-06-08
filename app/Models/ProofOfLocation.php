@@ -31,6 +31,8 @@ class ProofOfLocation extends Model
         'last_downloaded_at',
         'qr_scan_count',
         'last_scanned_at',
+        'company_id',
+        'is_company_document',
     ];
 
     // Document types
@@ -47,6 +49,7 @@ class ProofOfLocation extends Model
             'last_scanned_at' => 'datetime',
             'download_count' => 'integer',
             'qr_scan_count' => 'integer',
+            'is_company_document' => 'boolean',
         ];
     }
 
@@ -151,6 +154,16 @@ class ProofOfLocation extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function isCompanyDocument(): bool
+    {
+        return $this->is_company_document && $this->company_id !== null;
     }
 
     public function isActive(): bool

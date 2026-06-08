@@ -9,6 +9,11 @@ use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Auth\ProfileController;
 use App\Http\Controllers\Api\V1\CollectionAddressController;
 use App\Http\Controllers\Api\V1\CollectionController;
+use App\Http\Controllers\Api\V1\CompanyAddressController;
+use App\Http\Controllers\Api\V1\CompanyController;
+use App\Http\Controllers\Api\V1\CompanyDocumentController;
+use App\Http\Controllers\Api\V1\CompanyMemberController;
+use App\Http\Controllers\Api\V1\CompanySubscriptionController;
 use App\Http\Controllers\Api\V1\DeliveryRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\DocumentController;
@@ -330,4 +335,43 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('all', [DeviceTokenController::class, 'destroyAll']);
         Route::delete('{id}', [DeviceTokenController::class, 'destroy']);
     });
+
+    // Companies
+    Route::prefix('companies')->group(function () {
+        Route::get('/', [CompanyController::class, 'index']);
+        Route::post('/', [CompanyController::class, 'store']);
+        Route::get('plans', [CompanyController::class, 'plans']);
+        Route::get('current', [CompanyController::class, 'current']);
+        Route::post('switch/{company}', [CompanyController::class, 'switchCompany']);
+        Route::get('{company}', [CompanyController::class, 'show']);
+        Route::put('{company}', [CompanyController::class, 'update']);
+
+        // Members
+        Route::get('members', [CompanyMemberController::class, 'index']);
+        Route::get('members/search', [CompanyMemberController::class, 'search']);
+        Route::post('members/invite', [CompanyMemberController::class, 'invite']);
+        Route::put('members/{member}/role', [CompanyMemberController::class, 'updateRole']);
+        Route::delete('members/{member}', [CompanyMemberController::class, 'remove']);
+
+        // Company Addresses
+        Route::get('addresses', [CompanyAddressController::class, 'index']);
+        Route::get('addresses/search', [CompanyAddressController::class, 'search']);
+        Route::get('addresses/{address}', [CompanyAddressController::class, 'show']);
+
+        // Company Documents
+        Route::get('documents', [CompanyDocumentController::class, 'index']);
+        Route::post('documents', [CompanyDocumentController::class, 'create']);
+        Route::get('documents/usage', [CompanyDocumentController::class, 'usage']);
+
+        // Subscription
+        Route::get('subscription', [CompanySubscriptionController::class, 'show']);
+        Route::post('subscription/subscribe', [CompanySubscriptionController::class, 'subscribe']);
+        Route::post('subscription/renew', [CompanySubscriptionController::class, 'renew']);
+        Route::post('subscription/cancel', [CompanySubscriptionController::class, 'cancel']);
+        Route::post('subscription/change-plan', [CompanySubscriptionController::class, 'changePlan']);
+        Route::get('subscription/payments', [CompanySubscriptionController::class, 'payments']);
+    });
+
+    // Accept company invitation (outside company middleware)
+    Route::post('companies/invitation/{token}/accept', [CompanyMemberController::class, 'acceptInvitation']);
 });
