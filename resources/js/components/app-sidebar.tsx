@@ -13,27 +13,55 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { LayoutGrid, MapPin, FileText, FolderOpen, Truck, Building2, Settings, HelpCircle } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Tableau de bord',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Mes Adresses',
+        href: '/dashboard#addresses',
+        icon: MapPin,
+    },
+    {
+        title: 'Mes Documents',
+        href: '/dashboard#documents',
+        icon: FileText,
+    },
+    {
+        title: 'Collections',
+        href: '/collections',
+        icon: FolderOpen,
+    },
+    {
+        title: 'Livraisons',
+        href: '/deliveries',
+        icon: Truck,
+    },
+];
+
+const companyNavItems: NavItem[] = [
+    {
+        title: 'Espace Entreprise',
+        href: '/company',
+        icon: Building2,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Paramètres',
+        href: '/settings',
+        icon: Settings,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Aide',
+        href: '/help',
+        icon: HelpCircle,
     },
 ];
 
@@ -53,7 +81,8 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainNavItems} label="Personnel" />
+                <NavMain items={companyNavItems} label="Entreprise" />
             </SidebarContent>
 
             <SidebarFooter>
