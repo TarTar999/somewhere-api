@@ -108,7 +108,7 @@ class CompanyAddressController extends Controller
                 'houseType' => $address->house_type,
                 'homeStatus' => $address->home_status,
                 'description' => $address->description,
-                'commune' => $address->street?->commune,
+                'commune' => $address->street?->commune_name,
                 'isNonHabitation' => $address->is_non_habitation,
                 'nonHabitationType' => $address->non_habitation_type,
             ]);

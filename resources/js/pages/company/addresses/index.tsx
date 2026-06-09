@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import CompanyLayout from '@/layouts/company-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,16 +18,19 @@ interface PaginatedAddresses {
 }
 
 interface Props {
+    company: {
+        id: number;
+        name: string;
+        logo?: string;
+    };
+    userRole: CompanyRole;
     addresses: PaginatedAddresses;
     filters: {
         search?: string;
     };
 }
 
-export default function AddressesIndex({ addresses, filters }: Props) {
-    const { props } = usePage();
-    const company = (props as { company?: { name: string; logo?: string } }).company || { name: 'Entreprise' };
-    const userRole = ((props as { userRole?: CompanyRole }).userRole || 'member') as CompanyRole;
+export default function AddressesIndex({ company, userRole, addresses, filters }: Props) {
 
     const [search, setSearch] = useState(filters.search || '');
 

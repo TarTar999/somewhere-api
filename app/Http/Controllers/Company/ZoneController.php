@@ -28,6 +28,13 @@ class ZoneController extends Controller
         $labels = $this->labelService->getCompanyLabels($company);
 
         return Inertia::render('company/zones/index', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'zones' => $zones->map(fn ($zone) => $this->formatZone($zone)),
             'labels' => $labels->map(fn ($l) => [
                 'id' => $l->id,
@@ -55,6 +62,13 @@ class ZoneController extends Controller
         $parentZones = $company->zones()->whereNull('parent_zone_id')->get();
 
         return Inertia::render('company/zones/create', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'labels' => $labels->map(fn ($l) => [
                 'id' => $l->id,
                 'name' => $l->name,
@@ -118,6 +132,13 @@ class ZoneController extends Controller
         $stats = $this->zoneService->getZoneStatistics($zone);
 
         return Inertia::render('company/zones/show', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'zone' => $this->formatZone($zone, true),
             'statistics' => $stats,
             'geoJson' => $zone->toGeoJson(),
@@ -141,6 +162,13 @@ class ZoneController extends Controller
             ->get();
 
         return Inertia::render('company/zones/edit', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'zone' => $this->formatZone($zone, true),
             'labels' => $labels->map(fn ($l) => [
                 'id' => $l->id,

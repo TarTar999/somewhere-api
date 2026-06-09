@@ -15,11 +15,12 @@ class AddressController extends Controller
 {
     public function index(Request $request): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
         $memberIds = $company->members()->pluck('users.id');
 
         $query = Address::whereIn('user_id', $memberIds)
-            ->with(['user:id,first_name,last_name,email', 'street:id,display_name,commune']);
+            ->with(['user:id,first_name,last_name,email', 'street:id,display_name,commune_name']);
 
         // Search filter
         if ($search = $request->get('search')) {
@@ -38,7 +39,7 @@ class AddressController extends Controller
                 'streetName' => $address->street?->display_name,
                 'lieuDit' => $address->lieu_dit,
                 'quarter' => $address->quarter,
-                'commune' => $address->street?->commune,
+                'commune' => $address->street?->commune_name,
                 'verificationStatus' => $address->verification_status,
                 'createdAt' => $address->created_at->diffForHumans(),
                 'owner' => [
@@ -48,6 +49,12 @@ class AddressController extends Controller
             ]);
 
         return Inertia::render('company/addresses/index', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'addresses' => $addresses,
             'filters' => [
                 'search' => $request->get('search'),
@@ -57,7 +64,8 @@ class AddressController extends Controller
 
     public function show(Address $address): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
         $memberIds = $company->members()->pluck('users.id');
 
         // Verify access
@@ -84,17 +92,23 @@ class AddressController extends Controller
             ]);
 
         return Inertia::render('company/addresses/show', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'address' => [
                 'id' => $address->id,
                 'swAddress' => $address->sw_address,
-                'latitude' => $address->latitude,
-                'longitude' => $address->longitude,
+                'latitude' => (float) $address->latitude,
+                'longitude' => (float) $address->longitude,
                 'streetNumber' => $address->street_number,
                 'streetName' => $address->street?->display_name,
                 'lieuDit' => $address->lieu_dit,
                 'quarter' => $address->quarter,
                 'subQuarter' => $address->sub_quarter,
-                'commune' => $address->street?->commune,
+                'commune' => $address->street?->commune_name,
                 'houseType' => $address->house_type,
                 'homeStatus' => $address->home_status,
                 'description' => $address->description,

@@ -20,16 +20,20 @@ import { ArrowLeft, MapPin, Home, User, FileText, Plus, CheckCircle, Clock, XCir
 import type { CompanyRole, CompanyAddress, CompanyDocument } from '@/types/company';
 
 interface Props {
+    company: {
+        id: number;
+        name: string;
+        logo?: string;
+    };
+    userRole: CompanyRole;
     address: CompanyAddress;
     documents: CompanyDocument[];
     canCreateDocument: boolean;
     remainingDocuments: number;
 }
 
-export default function AddressShow({ address, documents, canCreateDocument, remainingDocuments }: Props) {
-    const { props, errors } = usePage();
-    const company = (props as { company?: { name: string; logo?: string } }).company || { name: 'Entreprise' };
-    const userRole = ((props as { userRole?: CompanyRole }).userRole || 'member') as CompanyRole;
+export default function AddressShow({ company, userRole, address, documents, canCreateDocument, remainingDocuments }: Props) {
+    const { errors } = usePage().props;
 
     const [documentType, setDocumentType] = useState<string>('location_plan');
     const [isCreating, setIsCreating] = useState(false);

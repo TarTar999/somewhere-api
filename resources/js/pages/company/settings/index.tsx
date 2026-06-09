@@ -22,15 +22,16 @@ interface Company {
     city?: string;
     country?: string;
     logo?: string;
+    status?: string;
 }
 
 interface Props {
     company: Company;
+    userRole: CompanyRole;
 }
 
-export default function CompanySettings({ company }: Props) {
-    const { errors } = usePage();
-    const userRole = 'admin' as CompanyRole;
+export default function CompanySettings({ company, userRole }: Props) {
+    const { errors } = usePage().props;
 
     const [formData, setFormData] = useState({
         name: company.name,

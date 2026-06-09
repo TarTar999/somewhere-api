@@ -33,6 +33,13 @@ class LabelController extends Controller
         }
 
         return Inertia::render('company/labels/index', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'labels' => $labels->map(fn ($label) => [
                 'id' => $label->id,
                 'name' => $label->name,

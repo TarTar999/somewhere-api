@@ -18,26 +18,34 @@ class MemberController extends Controller
 
     public function index(): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
 
         $members = $company->users()
             ->withPivot(['role', 'status', 'joined_at', 'invited_by'])
             ->get()
-            ->map(fn ($user) => [
-                'id' => $user->id,
-                'name' => $user->full_name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'avatar' => $user->avatar_path ? asset('storage/' . $user->avatar_path) : null,
-                'role' => $user->pivot->role,
-                'status' => $user->pivot->status,
-                'joinedAt' => $user->pivot->joined_at?->diffForHumans(),
+            ->map(fn ($member) => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'email' => $member->email,
+                'phone' => $member->phone,
+                'avatar' => $member->avatar_path ? asset('storage/' . $member->avatar_path) : null,
+                'role' => $member->pivot->role,
+                'status' => $member->pivot->status,
+                'joinedAt' => $member->pivot->joined_at,
             ]);
 
         return Inertia::render('company/members/index', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'members' => $members,
-            'canManageMembers' => auth()->user()->isCompanyManager($company),
-            'canChangeRoles' => auth()->user()->isCompanyAdmin($company),
+            'canManageMembers' => $user->isCompanyManager($company),
+            'canChangeRoles' => $user->isCompanyAdmin($company),
             'canAddMore' => $company->canAddMember(),
             'memberLimit' => $company->activeSubscription?->max_members ?? 0,
         ]);
@@ -45,7 +53,18 @@ class MemberController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('company/members/invite');
+        $user = auth()->user();
+        $company = $user->currentCompany;
+
+        return Inertia::render('company/members/invite', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

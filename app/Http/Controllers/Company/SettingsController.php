@@ -18,7 +18,8 @@ class SettingsController extends Controller
 
     public function edit(): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
 
         return Inertia::render('company/settings/index', [
             'company' => [
@@ -34,7 +35,9 @@ class SettingsController extends Controller
                 'city' => $company->city,
                 'country' => $company->country,
                 'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
             ],
+            'userRole' => $user->getCompanyRole($company),
         ]);
     }
 

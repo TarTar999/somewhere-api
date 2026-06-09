@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\CompanyUser;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -23,7 +24,8 @@ class CompanyService
             'address' => $data['address'] ?? null,
             'city' => $data['city'] ?? null,
             'country' => $data['country'] ?? 'CM',
-            'status' => Company::STATUS_PENDING,
+            'status' => Company::STATUS_ACTIVE,
+            'activated_at' => now(),
         ]);
 
         // Add owner as admin
@@ -33,10 +35,30 @@ class CompanyService
             'joined_at' => now(),
         ]);
 
+        // Create trial subscription with starter plan
+        $this->createTrialSubscription($company);
+
         // Set as current company for owner
         $owner->update(['current_company_id' => $company->id]);
 
         return $company;
+    }
+
+    protected function createTrialSubscription(Company $company): CompanySubscription
+    {
+        $trialDays = config('company.trial_days', 14);
+        $starterPlan = config('company.plans.starter');
+
+        return CompanySubscription::create([
+            'company_id' => $company->id,
+            'plan_code' => 'starter',
+            'price' => 0, // Trial is free
+            'max_members' => $starterPlan['max_members'] ?? 3,
+            'documents_per_month' => $starterPlan['documents_per_month'] ?? 25,
+            'status' => CompanySubscription::STATUS_ACTIVE,
+            'current_period_start' => now(),
+            'current_period_end' => now()->addDays($trialDays),
+        ]);
     }
 
     public function update(Company $company, array $data): Company

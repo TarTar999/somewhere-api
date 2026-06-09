@@ -17,10 +17,18 @@ class SubscriptionController extends Controller
 
     public function show(): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
         $subscription = $company->activeSubscription;
 
         return Inertia::render('company/subscription/index', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'hasSubscription' => $subscription !== null,
             'subscription' => $subscription ? [
                 'id' => $subscription->id,
@@ -43,9 +51,19 @@ class SubscriptionController extends Controller
 
     public function plans(): Response
     {
+        $user = auth()->user();
+        $company = $user->currentCompany;
+
         return Inertia::render('company/subscription/plans', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'plans' => $this->getFormattedPlans(),
-            'currentPlan' => auth()->user()->currentCompany->activeSubscription?->plan_code,
+            'currentPlan' => $company->activeSubscription?->plan_code,
         ]);
     }
 
@@ -114,7 +132,8 @@ class SubscriptionController extends Controller
 
     public function invoices(): Response
     {
-        $company = auth()->user()->currentCompany;
+        $user = auth()->user();
+        $company = $user->currentCompany;
 
         $payments = $company->payments()
             ->orderBy('created_at', 'desc')
@@ -137,6 +156,13 @@ class SubscriptionController extends Controller
             ]);
 
         return Inertia::render('company/subscription/invoices', [
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'logo' => $company->logo_path ? asset('storage/' . $company->logo_path) : null,
+                'status' => $company->status,
+            ],
+            'userRole' => $user->getCompanyRole($company),
             'payments' => $payments,
         ]);
     }

@@ -14,13 +14,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Circle, Hexagon, ArrowLeft, Save, Undo2 } from 'lucide-react';
 import { Link, useForm } from '@inertiajs/react';
 import type { CompanyRole } from '@/types/company';
-import { MapContainer, TileLayer, Circle as LeafletCircle, Polygon, useMapEvents, useMap } from 'react-leaflet';
-import type { LatLng } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 interface LabelItem {
     id: number;
@@ -65,21 +62,140 @@ interface Props {
     defaultColors: string[];
 }
 
-function MapClickHandler({
+// Lazy load map component to avoid SSR issues
+interface ZoneMapProps {
+    zoneType: 'circle' | 'polygon';
+    circleCenter: { lat: number; lng: number } | null;
+    polygonPoints: Array<{ lat: number; lng: number }>;
+    radiusMeters: number;
+    fillColor: string;
+    fillOpacity: number;
+    strokeColor: string;
+    strokeWidth: number;
+    onCircleClick: (lat: number, lng: number) => void;
+    onPolygonClick: (lat: number, lng: number) => void;
+}
+
+function ZoneMap({
+    zoneType,
+    circleCenter,
+    polygonPoints,
+    radiusMeters,
+    fillColor,
+    fillOpacity,
+    strokeColor,
+    strokeWidth,
+    onCircleClick,
+    onPolygonClick,
+}: ZoneMapProps) {
+    const [MapComponents, setMapComponents] = useState<{
+        MapContainer: any;
+        TileLayer: any;
+        Circle: any;
+        Polygon: any;
+        useMapEvents: any;
+    } | null>(null);
+
+    useEffect(() => {
+        Promise.all([
+            import('react-leaflet'),
+            import('leaflet/dist/leaflet.css'),
+        ]).then(([mod]) => {
+            setMapComponents({
+                MapContainer: mod.MapContainer,
+                TileLayer: mod.TileLayer,
+                Circle: mod.Circle,
+                Polygon: mod.Polygon,
+                useMapEvents: mod.useMapEvents,
+            });
+        }).catch((err) => {
+            console.error('Failed to load map components:', err);
+        });
+    }, []);
+
+    if (!MapComponents) {
+        return (
+            <div className="h-full w-full flex items-center justify-center bg-muted">
+                <p className="text-muted-foreground">Chargement de la carte...</p>
+            </div>
+        );
+    }
+
+    const { MapContainer, TileLayer, Circle: LeafletCircle, Polygon: LeafletPolygon } = MapComponents;
+
+    // Calculate center
+    let center: [number, number] = [3.848, 11.502];
+    if (circleCenter) {
+        center = [circleCenter.lat, circleCenter.lng];
+    } else if (polygonPoints.length > 0) {
+        const avgLat = polygonPoints.reduce((sum, p) => sum + p.lat, 0) / polygonPoints.length;
+        const avgLng = polygonPoints.reduce((sum, p) => sum + p.lng, 0) / polygonPoints.length;
+        center = [avgLat, avgLng];
+    }
+
+    return (
+        <MapContainer
+            center={center}
+            zoom={14}
+            className="h-full w-full"
+            scrollWheelZoom={true}
+        >
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MapClickHandlerInner
+                zoneType={zoneType}
+                onCircleClick={onCircleClick}
+                onPolygonClick={onPolygonClick}
+                useMapEvents={MapComponents.useMapEvents}
+            />
+
+            {zoneType === 'circle' && circleCenter && (
+                <LeafletCircle
+                    center={[circleCenter.lat, circleCenter.lng]}
+                    radius={radiusMeters}
+                    pathOptions={{
+                        fillColor,
+                        fillOpacity,
+                        color: strokeColor,
+                        weight: strokeWidth,
+                    }}
+                />
+            )}
+
+            {zoneType === 'polygon' && polygonPoints.length >= 3 && (
+                <LeafletPolygon
+                    positions={polygonPoints.map((p) => [p.lat, p.lng])}
+                    pathOptions={{
+                        fillColor,
+                        fillOpacity,
+                        color: strokeColor,
+                        weight: strokeWidth,
+                    }}
+                />
+            )}
+        </MapContainer>
+    );
+}
+
+function MapClickHandlerInner({
     zoneType,
     onCircleClick,
     onPolygonClick,
+    useMapEvents,
 }: {
     zoneType: 'circle' | 'polygon';
-    onCircleClick: (latlng: LatLng) => void;
-    onPolygonClick: (latlng: LatLng) => void;
+    onCircleClick: (lat: number, lng: number) => void;
+    onPolygonClick: (lat: number, lng: number) => void;
+    useMapEvents: any;
 }) {
     useMapEvents({
-        click(e) {
+        click(e: any) {
             if (zoneType === 'circle') {
-                onCircleClick(e.latlng);
+                onCircleClick(e.latlng.lat, e.latlng.lng);
             } else {
-                onPolygonClick(e.latlng);
+                onPolygonClick(e.latlng.lat, e.latlng.lng);
             }
         },
     });
@@ -110,18 +226,18 @@ export default function ZonesEdit({ company, userRole, zone, labels, parentZones
         label_ids: zone.labels.map((l) => l.id),
     });
 
-    const handleCircleClick = useCallback((latlng: LatLng) => {
-        const center = { lat: latlng.lat, lng: latlng.lng };
+    const handleCircleClick = useCallback((lat: number, lng: number) => {
+        const center = { lat, lng };
         setCircleCenter(center);
         form.setData({
             ...form.data,
-            center_lat: latlng.lat,
-            center_lng: latlng.lng,
+            center_lat: lat,
+            center_lng: lng,
         });
     }, [form]);
 
-    const handlePolygonClick = useCallback((latlng: LatLng) => {
-        const newPoint = { lat: latlng.lat, lng: latlng.lng };
+    const handlePolygonClick = useCallback((lat: number, lng: number) => {
+        const newPoint = { lat, lng };
         const newPoints = [...polygonPoints, newPoint];
         setPolygonPoints(newPoints);
         form.setData('polygon_coordinates', newPoints);
@@ -163,18 +279,6 @@ export default function ZonesEdit({ company, userRole, zone, labels, parentZones
     const isValid =
         form.data.name.trim() &&
         ((zoneType === 'circle' && circleCenter) || (zoneType === 'polygon' && polygonPoints.length >= 3));
-
-    const getMapCenter = (): [number, number] => {
-        if (circleCenter) {
-            return [circleCenter.lat, circleCenter.lng];
-        }
-        if (polygonPoints.length > 0) {
-            const lats = polygonPoints.map((p) => p.lat);
-            const lngs = polygonPoints.map((p) => p.lng);
-            return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
-        }
-        return [3.848, 11.502];
-    };
 
     return (
         <CompanyLayout title={`Modifier: ${zone.name}`} company={company} userRole={userRole}>
@@ -227,42 +331,18 @@ export default function ZonesEdit({ company, userRole, zone, labels, parentZones
                         </CardHeader>
                         <CardContent>
                             <div className="h-[500px] rounded-lg overflow-hidden border">
-                                <MapContainer center={getMapCenter()} zoom={14} className="h-full w-full" scrollWheelZoom={true}>
-                                    <TileLayer
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
-                                    <MapClickHandler
-                                        zoneType={zoneType}
-                                        onCircleClick={handleCircleClick}
-                                        onPolygonClick={handlePolygonClick}
-                                    />
-
-                                    {zoneType === 'circle' && circleCenter && (
-                                        <LeafletCircle
-                                            center={[circleCenter.lat, circleCenter.lng]}
-                                            radius={form.data.radius_meters}
-                                            pathOptions={{
-                                                fillColor: form.data.fill_color,
-                                                fillOpacity: form.data.fill_opacity,
-                                                color: form.data.stroke_color,
-                                                weight: form.data.stroke_width,
-                                            }}
-                                        />
-                                    )}
-
-                                    {zoneType === 'polygon' && polygonPoints.length >= 3 && (
-                                        <Polygon
-                                            positions={polygonPoints.map((p) => [p.lat, p.lng])}
-                                            pathOptions={{
-                                                fillColor: form.data.fill_color,
-                                                fillOpacity: form.data.fill_opacity,
-                                                color: form.data.stroke_color,
-                                                weight: form.data.stroke_width,
-                                            }}
-                                        />
-                                    )}
-                                </MapContainer>
+                                <ZoneMap
+                                    zoneType={zoneType}
+                                    circleCenter={circleCenter}
+                                    polygonPoints={polygonPoints}
+                                    radiusMeters={form.data.radius_meters}
+                                    fillColor={form.data.fill_color}
+                                    fillOpacity={form.data.fill_opacity}
+                                    strokeColor={form.data.stroke_color}
+                                    strokeWidth={form.data.stroke_width}
+                                    onCircleClick={handleCircleClick}
+                                    onPolygonClick={handlePolygonClick}
+                                />
                             </div>
 
                             {zoneType === 'polygon' && (

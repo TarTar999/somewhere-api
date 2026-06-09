@@ -1,12 +1,11 @@
 import CompanyLayout from '@/layouts/company-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit2, Copy, Trash2, Circle, Hexagon, MapPin, Calendar, User, Layers } from 'lucide-react';
+import { ArrowLeft, Edit2, Copy, Trash2, Circle, Hexagon, Calendar, User, Layers } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
 import type { CompanyRole } from '@/types/company';
-import { MapContainer, TileLayer, Circle as LeafletCircle, Polygon } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { ZoneMapView } from '@/components/map/zone-map-view';
 
 interface LabelItem {
     id: number;
@@ -103,19 +102,6 @@ export default function ZonesShow({ company, userRole, zone, statistics }: Props
         return `${sqm.toFixed(0)} m²`;
     };
 
-    // Calculate map center
-    const getMapCenter = (): [number, number] => {
-        if (zone.zoneType === 'circle' && zone.centerLat && zone.centerLng) {
-            return [zone.centerLat, zone.centerLng];
-        }
-        if (zone.polygonCoordinates && zone.polygonCoordinates.length > 0) {
-            const lats = zone.polygonCoordinates.map((p) => p.lat);
-            const lngs = zone.polygonCoordinates.map((p) => p.lng);
-            return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
-        }
-        return [3.848, 11.502];
-    };
-
     return (
         <CompanyLayout title={zone.name} company={company} userRole={userRole}>
             <div className="space-y-6">
@@ -166,37 +152,17 @@ export default function ZonesShow({ company, userRole, zone, statistics }: Props
                         </CardHeader>
                         <CardContent>
                             <div className="h-[400px] rounded-lg overflow-hidden border">
-                                <MapContainer center={getMapCenter()} zoom={14} className="h-full w-full" scrollWheelZoom={true}>
-                                    <TileLayer
-                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
-
-                                    {zone.zoneType === 'circle' && zone.centerLat && zone.centerLng && zone.radiusMeters && (
-                                        <LeafletCircle
-                                            center={[zone.centerLat, zone.centerLng]}
-                                            radius={zone.radiusMeters}
-                                            pathOptions={{
-                                                fillColor: zone.fillColor,
-                                                fillOpacity: zone.fillOpacity,
-                                                color: zone.strokeColor,
-                                                weight: zone.strokeWidth,
-                                            }}
-                                        />
-                                    )}
-
-                                    {zone.zoneType === 'polygon' && zone.polygonCoordinates && zone.polygonCoordinates.length >= 3 && (
-                                        <Polygon
-                                            positions={zone.polygonCoordinates.map((p) => [p.lat, p.lng])}
-                                            pathOptions={{
-                                                fillColor: zone.fillColor,
-                                                fillOpacity: zone.fillOpacity,
-                                                color: zone.strokeColor,
-                                                weight: zone.strokeWidth,
-                                            }}
-                                        />
-                                    )}
-                                </MapContainer>
+                                <ZoneMapView
+                                    zoneType={zone.zoneType}
+                                    centerLat={zone.centerLat}
+                                    centerLng={zone.centerLng}
+                                    radiusMeters={zone.radiusMeters}
+                                    polygonCoordinates={zone.polygonCoordinates}
+                                    fillColor={zone.fillColor}
+                                    fillOpacity={zone.fillOpacity}
+                                    strokeColor={zone.strokeColor}
+                                    strokeWidth={zone.strokeWidth}
+                                />
                             </div>
                         </CardContent>
                     </Card>

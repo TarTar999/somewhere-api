@@ -73,7 +73,7 @@ class MapController extends Controller
             'streetName' => $address->street?->display_name,
             'lieuDit' => $address->lieu_dit,
             'quarter' => $address->quarter,
-            'commune' => $address->street?->commune,
+            'commune' => $address->street?->commune_name,
             'distance' => isset($address->distance) ? round($address->distance, 2) : null,
         ]);
 
@@ -98,7 +98,7 @@ class MapController extends Controller
                 'lieuDit' => $address->lieu_dit,
                 'quarter' => $address->quarter,
                 'subQuarter' => $address->sub_quarter,
-                'commune' => $address->street?->commune,
+                'commune' => $address->street?->commune_name,
                 'houseType' => $address->house_type,
                 'homeStatus' => $address->home_status,
                 'verificationStatus' => $address->verification_status,
