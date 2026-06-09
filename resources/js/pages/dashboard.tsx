@@ -295,6 +295,16 @@ export default function Dashboard({ addresses, documents, collections, stats, ha
                                                     {doc.downloadCount} téléchargement(s)
                                                 </p>
                                             </div>
+                                            {doc.isActive && !doc.isExpired && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => window.open(`/api/v1/proof-of-location/${doc.id}/download`, '_blank')}
+                                                >
+                                                    <Download className="mr-1 h-3 w-3" />
+                                                    PDF
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

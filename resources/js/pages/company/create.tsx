@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function CreateCompany({ plans }: Props) {
-    const { errors } = usePage();
+    const { errors } = usePage().props;
 
     const [formData, setFormData] = useState({
         name: '',
