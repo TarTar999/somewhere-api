@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Address;
+use App\Models\Collection;
 use App\Models\ProofOfLocation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +15,7 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $hasCompany = $user->company_id !== null;
 
         // Get user's addresses
         $addresses = Address::where('user_id', $user->id)
@@ -61,6 +63,20 @@ class DashboardController extends Controller
                 ] : null,
             ]);
 
+        // Get user's collections
+        $collections = Collection::where('owner_id', $user->id)
+            ->withCount('addresses')
+            ->latest()
+            ->get()
+            ->map(fn($collection) => [
+                'id' => $collection->id,
+                'name' => $collection->name,
+                'description' => $collection->description,
+                'addressCount' => $collection->addresses_count,
+                'isPublic' => $collection->sharedWith()->count() > 0, // Consider public if shared
+                'createdAt' => $collection->created_at->toIso8601String(),
+            ]);
+
         // Stats
         $stats = [
             'totalAddresses' => $addresses->count(),
@@ -69,12 +85,16 @@ class DashboardController extends Controller
             'totalDocuments' => $documents->count(),
             'activeDocuments' => $documents->where('isActive', true)->count(),
             'expiredDocuments' => $documents->where('isExpired', true)->count(),
+            'totalCollections' => $collections->count(),
+            'pendingDeliveries' => 0, // TODO: Implement when deliveries are ready
         ];
 
         return Inertia::render('dashboard', [
             'addresses' => $addresses,
             'documents' => $documents,
+            'collections' => $collections,
             'stats' => $stats,
+            'hasCompany' => $hasCompany,
         ]);
     }
 }

@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { FileText, MapPin, CheckCircle, Clock, AlertTriangle, Download } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { FileText, MapPin, CheckCircle, Clock, AlertTriangle, Download, Plus, FolderOpen, Truck, Building2, ArrowRight, ExternalLink } from 'lucide-react';
 
 interface Address {
     id: number;
@@ -43,6 +43,15 @@ interface Document {
     } | null;
 }
 
+interface Collection {
+    id: number;
+    name: string;
+    description: string | null;
+    addressCount: number;
+    isPublic: boolean;
+    createdAt: string;
+}
+
 interface Stats {
     totalAddresses: number;
     verifiedAddresses: number;
@@ -50,12 +59,16 @@ interface Stats {
     totalDocuments: number;
     activeDocuments: number;
     expiredDocuments: number;
+    totalCollections: number;
+    pendingDeliveries: number;
 }
 
 interface Props {
     addresses: Address[];
     documents: Document[];
+    collections: Collection[];
     stats: Stats;
+    hasCompany: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -89,14 +102,38 @@ function formatDate(dateString: string) {
     });
 }
 
-export default function Dashboard({ addresses, documents, stats }: Props) {
+export default function Dashboard({ addresses, documents, collections, stats, hasCompany }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tableau de bord" />
             <div className="flex h-full flex-1 flex-col gap-6 p-4">
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-3">
+                    <Button asChild variant="outline">
+                        <Link href="/collections">
+                            <FolderOpen className="mr-2 h-4 w-4" />
+                            Mes Collections
+                        </Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/deliveries">
+                            <Truck className="mr-2 h-4 w-4" />
+                            Livraisons
+                        </Link>
+                    </Button>
+                    {hasCompany && (
+                        <Button asChild>
+                            <Link href="/company">
+                                <Building2 className="mr-2 h-4 w-4" />
+                                Espace Entreprise
+                            </Link>
+                        </Button>
+                    )}
+                </div>
+
                 {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => document.getElementById('addresses')?.scrollIntoView({ behavior: 'smooth' })}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Adresses</CardTitle>
                             <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -108,7 +145,7 @@ export default function Dashboard({ addresses, documents, stats }: Props) {
                             </p>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => document.getElementById('documents')?.scrollIntoView({ behavior: 'smooth' })}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Documents</CardTitle>
                             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -122,40 +159,48 @@ export default function Dashboard({ addresses, documents, stats }: Props) {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">En attente</CardTitle>
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Collections</CardTitle>
+                            <FolderOpen className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.pendingAddresses}</div>
+                            <div className="text-2xl font-bold">{stats.totalCollections}</div>
                             <p className="text-xs text-muted-foreground">
-                                adresse(s) en vérification
+                                collection(s) créée(s)
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Expirés</CardTitle>
-                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Livraisons</CardTitle>
+                            <Truck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.expiredDocuments}</div>
+                            <div className="text-2xl font-bold">{stats.pendingDeliveries}</div>
                             <p className="text-xs text-muted-foreground">
-                                document(s) à renouveler
+                                en attente
                             </p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Addresses Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-5 w-5" />
-                            Mes Adresses
-                        </CardTitle>
-                        <CardDescription>
-                            Liste de vos adresses enregistrées
-                        </CardDescription>
+                <Card id="addresses">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="h-5 w-5" />
+                                Mes Adresses
+                            </CardTitle>
+                            <CardDescription>
+                                Liste de vos adresses enregistrées
+                            </CardDescription>
+                        </div>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href="/collections/create">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Créer une collection
+                            </Link>
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         {addresses.length === 0 ? (
@@ -195,7 +240,7 @@ export default function Dashboard({ addresses, documents, stats }: Props) {
                 </Card>
 
                 {/* Documents Section */}
-                <Card>
+                <Card id="documents">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <FileText className="h-5 w-5" />
@@ -257,6 +302,94 @@ export default function Dashboard({ addresses, documents, stats }: Props) {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Collections Section */}
+                <Card id="collections">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <FolderOpen className="h-5 w-5" />
+                                Mes Collections
+                            </CardTitle>
+                            <CardDescription>
+                                Groupez vos adresses et partagez-les
+                            </CardDescription>
+                        </div>
+                        <Button asChild size="sm">
+                            <Link href="/collections">
+                                Voir tout
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {collections.length === 0 ? (
+                            <div className="text-center py-8">
+                                <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                                <p className="mt-2 text-muted-foreground">
+                                    Aucune collection créée
+                                </p>
+                                <Button asChild variant="outline" className="mt-4">
+                                    <Link href="/collections/create">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Créer ma première collection
+                                    </Link>
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {collections.slice(0, 6).map((collection) => (
+                                    <Link
+                                        key={collection.id}
+                                        href={`/collections/${collection.id}`}
+                                        className="block rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-medium">{collection.name}</p>
+                                            {collection.isPublic && (
+                                                <Badge variant="outline" className="text-xs">
+                                                    <ExternalLink className="mr-1 h-3 w-3" />
+                                                    Public
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        {collection.description && (
+                                            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                                                {collection.description}
+                                            </p>
+                                        )}
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            {collection.addressCount} adresse(s)
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Enterprise CTA */}
+                {!hasCompany && (
+                    <Card className="border-primary/20 bg-primary/5">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Building2 className="h-5 w-5" />
+                                Espace Entreprise
+                            </CardTitle>
+                            <CardDescription>
+                                Créez des zones géographiques, gérez vos points d'intérêt, lancez des campagnes terrain et plus encore.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button asChild>
+                                <Link href="/company/create">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Créer mon entreprise
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

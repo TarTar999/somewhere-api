@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\User\CollectionController;
 use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\DeliveryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -27,6 +29,20 @@ Route::prefix('share')->name('share.')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Collections
+    Route::prefix('collections')->name('collections.')->group(function () {
+        Route::get('/', [CollectionController::class, 'index'])->name('index');
+        Route::get('/create', [CollectionController::class, 'create'])->name('create');
+        Route::get('/{collection}', [CollectionController::class, 'show'])->name('show');
+        Route::get('/{collection}/edit', [CollectionController::class, 'edit'])->name('edit');
+    });
+
+    // Deliveries
+    Route::prefix('deliveries')->name('deliveries.')->group(function () {
+        Route::get('/', [DeliveryController::class, 'index'])->name('index');
+        Route::get('/{delivery}', [DeliveryController::class, 'show'])->name('show');
+    });
 });
 
 require __DIR__.'/settings.php';
