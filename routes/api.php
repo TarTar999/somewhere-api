@@ -12,8 +12,10 @@ use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\CompanyAddressController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\CompanyDocumentController;
+use App\Http\Controllers\Api\V1\CompanyLabelController;
 use App\Http\Controllers\Api\V1\CompanyMemberController;
 use App\Http\Controllers\Api\V1\CompanySubscriptionController;
+use App\Http\Controllers\Api\V1\CompanyZoneController;
 use App\Http\Controllers\Api\V1\DeliveryRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\DocumentController;
@@ -370,6 +372,34 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('subscription/cancel', [CompanySubscriptionController::class, 'cancel']);
         Route::post('subscription/change-plan', [CompanySubscriptionController::class, 'changePlan']);
         Route::get('subscription/payments', [CompanySubscriptionController::class, 'payments']);
+
+        // Labels
+        Route::prefix('{company}/labels')->group(function () {
+            Route::get('/', [CompanyLabelController::class, 'index']);
+            Route::post('/', [CompanyLabelController::class, 'store']);
+            Route::get('icons', [CompanyLabelController::class, 'icons']);
+            Route::post('bulk', [CompanyLabelController::class, 'bulkCreate']);
+            Route::delete('bulk', [CompanyLabelController::class, 'bulkDelete']);
+            Route::get('{label}', [CompanyLabelController::class, 'show']);
+            Route::put('{label}', [CompanyLabelController::class, 'update']);
+            Route::delete('{label}', [CompanyLabelController::class, 'destroy']);
+        });
+
+        // Zones
+        Route::prefix('{company}/zones')->group(function () {
+            Route::get('/', [CompanyZoneController::class, 'index']);
+            Route::post('/', [CompanyZoneController::class, 'store']);
+            Route::get('hierarchy', [CompanyZoneController::class, 'hierarchy']);
+            Route::get('contains', [CompanyZoneController::class, 'containsPoint']);
+            Route::get('in-bounds', [CompanyZoneController::class, 'inBounds']);
+            Route::get('export/geojson', [CompanyZoneController::class, 'exportGeoJson']);
+            Route::get('{zone}', [CompanyZoneController::class, 'show']);
+            Route::put('{zone}', [CompanyZoneController::class, 'update']);
+            Route::delete('{zone}', [CompanyZoneController::class, 'destroy']);
+            Route::get('{zone}/children', [CompanyZoneController::class, 'children']);
+            Route::get('{zone}/statistics', [CompanyZoneController::class, 'statistics']);
+            Route::post('{zone}/duplicate', [CompanyZoneController::class, 'duplicate']);
+        });
     });
 
     // Accept company invitation (outside company middleware)

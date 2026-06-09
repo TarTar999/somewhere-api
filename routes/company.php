@@ -3,11 +3,13 @@
 use App\Http\Controllers\Company\AddressController;
 use App\Http\Controllers\Company\DashboardController;
 use App\Http\Controllers\Company\InvitationController;
+use App\Http\Controllers\Company\LabelController;
 use App\Http\Controllers\Company\MemberController;
 use App\Http\Controllers\Company\OnboardingController;
 use App\Http\Controllers\Company\SelectionController;
 use App\Http\Controllers\Company\SettingsController;
 use App\Http\Controllers\Company\SubscriptionController;
+use App\Http\Controllers\Company\ZoneController;
 use App\Http\Controllers\Public\MapController;
 use Illuminate\Support\Facades\Route;
 
@@ -71,6 +73,27 @@ Route::middleware(['auth', 'verified', 'company'])->prefix('company')->name('com
     Route::get('addresses', [AddressController::class, 'index'])->name('addresses.index');
     Route::get('addresses/{address}', [AddressController::class, 'show'])->name('addresses.show');
     Route::post('addresses/{address}/document', [AddressController::class, 'createDocument'])->name('addresses.create-document');
+
+    // Labels (manager+ only)
+    Route::middleware('company:manager')->group(function () {
+        Route::get('labels', [LabelController::class, 'index'])->name('labels.index');
+        Route::post('labels', [LabelController::class, 'store'])->name('labels.store');
+        Route::put('labels/{label}', [LabelController::class, 'update'])->name('labels.update');
+        Route::delete('labels/{label}', [LabelController::class, 'destroy'])->name('labels.destroy');
+        Route::delete('labels', [LabelController::class, 'bulkDestroy'])->name('labels.bulk-destroy');
+    });
+
+    // Zones (manager+ only)
+    Route::middleware('company:manager')->group(function () {
+        Route::get('zones', [ZoneController::class, 'index'])->name('zones.index');
+        Route::get('zones/create', [ZoneController::class, 'create'])->name('zones.create');
+        Route::post('zones', [ZoneController::class, 'store'])->name('zones.store');
+        Route::get('zones/{zone}', [ZoneController::class, 'show'])->name('zones.show');
+        Route::get('zones/{zone}/edit', [ZoneController::class, 'edit'])->name('zones.edit');
+        Route::put('zones/{zone}', [ZoneController::class, 'update'])->name('zones.update');
+        Route::delete('zones/{zone}', [ZoneController::class, 'destroy'])->name('zones.destroy');
+        Route::post('zones/{zone}/duplicate', [ZoneController::class, 'duplicate'])->name('zones.duplicate');
+    });
 
     // Subscription (admin only)
     Route::middleware('company:admin')->group(function () {

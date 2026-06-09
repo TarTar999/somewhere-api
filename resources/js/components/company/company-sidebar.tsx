@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, Users, MapPin, FileText, CreditCard, Settings, LayoutDashboard, ChevronRight } from 'lucide-react';
+import { Building2, Users, MapPin, FileText, CreditCard, Settings, LayoutDashboard, ChevronRight, Shapes, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CompanyRole } from '@/types/company';
 
@@ -14,6 +14,8 @@ const navItems: NavItem[] = [
     { title: 'Dashboard', href: '/company', icon: LayoutDashboard },
     { title: 'Membres', href: '/company/members', icon: Users },
     { title: 'Adresses', href: '/company/addresses', icon: MapPin },
+    { title: 'Zones', href: '/company/zones', icon: Shapes, roles: ['admin', 'manager'] },
+    { title: 'Labels', href: '/company/labels', icon: Tags, roles: ['admin', 'manager'] },
     { title: 'Abonnement', href: '/company/subscription', icon: CreditCard, roles: ['admin'] },
     { title: 'Paramètres', href: '/company/settings', icon: Settings, roles: ['admin'] },
 ];

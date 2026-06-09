@@ -151,6 +151,12 @@ class Address extends Model
             ->withTimestamps();
     }
 
+    public function labels(): BelongsToMany
+    {
+        return $this->belongsToMany(Label::class, 'address_labels')
+            ->withTimestamps();
+    }
+
     public function scopeNearby($query, float $lat, float $lng, float $radiusKm = 10)
     {
         $haversine = "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";

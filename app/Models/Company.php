@@ -100,6 +100,21 @@ class Company extends Model
         return $this->hasMany(ProofOfLocation::class);
     }
 
+    public function labels(): HasMany
+    {
+        return $this->hasMany(Label::class);
+    }
+
+    public function zones(): HasMany
+    {
+        return $this->hasMany(Zone::class);
+    }
+
+    public function activeZones(): HasMany
+    {
+        return $this->zones()->where('status', Zone::STATUS_ACTIVE);
+    }
+
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
