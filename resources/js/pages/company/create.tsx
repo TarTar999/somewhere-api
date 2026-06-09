@@ -47,12 +47,17 @@ export default function CreateCompany({ plans }: Props) {
             <div className="min-h-screen bg-muted/30 py-8">
                 <div className="mx-auto max-w-3xl px-4">
                     {/* Back Button */}
-                    <Link href="/company/select">
-                        <Button variant="ghost" size="sm" className="mb-6">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Retour
-                        </Button>
-                    </Link>
+                    <Button variant="ghost" size="sm" className="mb-6" onClick={() => history.back()}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Retour
+                    </Button>
+
+                    {/* General Error */}
+                    {(errors as Record<string, string>).company && (
+                        <div className="mb-6 rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive">
+                            {(errors as Record<string, string>).company}
+                        </div>
+                    )}
 
                     {/* Header */}
                     <div className="mb-8 text-center">
