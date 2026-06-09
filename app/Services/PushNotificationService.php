@@ -17,6 +17,7 @@ class PushNotificationService
 {
     private $messaging;
     private bool $isConfigured = false;
+    private static bool $warningLogged = false;
 
     public function __construct()
     {
@@ -42,7 +43,11 @@ class PushNotificationService
                 $this->messaging = $factory->createMessaging();
                 $this->isConfigured = true;
             } else {
-                Log::warning('Firebase credentials not configured');
+                // Only log this warning once per process to avoid log spam
+                if (!self::$warningLogged) {
+                    Log::warning('Firebase credentials not configured - push notifications disabled');
+                    self::$warningLogged = true;
+                }
             }
         } catch (\Exception $e) {
             Log::error('Failed to initialize Firebase: ' . $e->getMessage());
