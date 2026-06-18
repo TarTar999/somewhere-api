@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import 'leaflet/dist/leaflet.css';
 
 interface ZoneMapViewProps {
     zoneType: 'circle' | 'polygon';
@@ -33,10 +34,7 @@ export function ZoneMapView({
     } | null>(null);
 
     useEffect(() => {
-        Promise.all([
-            import('react-leaflet'),
-            import('leaflet/dist/leaflet.css'),
-        ]).then(([mod]) => {
+        import('react-leaflet').then((mod) => {
             setMapComponents({
                 MapContainer: mod.MapContainer,
                 TileLayer: mod.TileLayer,

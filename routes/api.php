@@ -157,6 +157,15 @@ Route::prefix('streets')->group(function () {
     Route::post('{streetId}/calculate-address', [StreetController::class, 'calculateAddress']);
 });
 
+// Map data (public for heatmap visualization)
+Route::prefix('map')->group(function () {
+    Route::get('heatmap', [\App\Http\Controllers\Api\V1\MapController::class, 'heatmap']);
+    Route::get('clusters', [\App\Http\Controllers\Api\V1\MapController::class, 'clusters']);
+    Route::get('addresses-in-bounds', [\App\Http\Controllers\Api\V1\MapController::class, 'addressesInBounds']);
+    Route::get('search', [\App\Http\Controllers\Api\V1\MapController::class, 'search']);
+    Route::get('zones/{zone}/stats', [\App\Http\Controllers\Api\V1\MapController::class, 'zoneStats']);
+});
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
 

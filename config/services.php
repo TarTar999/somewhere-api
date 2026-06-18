@@ -50,6 +50,8 @@ return [
 
     'mapbox' => [
         'token' => env('MAPBOX_ACCESS_TOKEN', ''),
+        'style' => env('MAPBOX_STYLE', 'default'),
+        'custom_style_url' => env('MAPBOX_CUSTOM_STYLE_URL', ''),
     ],
 
 ];

@@ -27,6 +27,8 @@ class User extends Authenticatable
         'email',
         'phone',
         'password',
+        'pin_code',
+        'has_pin_code',
         'sex',
         'nui_number',
         'cni_number',
@@ -43,6 +45,7 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
+        'pin_code',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
@@ -53,6 +56,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pin_code' => 'hashed',
+            'has_pin_code' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'cni_expiration_date' => 'date',
             'is_admin' => 'boolean',
@@ -323,5 +328,29 @@ class User extends Authenticatable
 
         $this->update(['current_company_id' => $company->id]);
         return true;
+    }
+
+    // PIN Code Authentication Methods
+    public function canAuthenticateWithPassword(): bool
+    {
+        return !empty($this->password);
+    }
+
+    public function canAuthenticateWithPin(): bool
+    {
+        return $this->has_pin_code && !empty($this->pin_code);
+    }
+
+    public function getAuthMethods(): array
+    {
+        return [
+            'password' => $this->canAuthenticateWithPassword(),
+            'pin_code' => $this->canAuthenticateWithPin(),
+        ];
+    }
+
+    public function needsPinSetup(): bool
+    {
+        return $this->canAuthenticateWithPassword() && !$this->canAuthenticateWithPin();
     }
 }

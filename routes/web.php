@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthMethodController;
+use App\Http\Controllers\Auth\PinCodeController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\User\CollectionController;
@@ -25,6 +27,18 @@ Route::prefix('share')->name('share.')->group(function () {
     Route::get('address/sw/{swAddress}', [ShareController::class, 'addressBySw'])
         ->where('swAddress', '.*')
         ->name('address.sw');
+});
+
+// Auth method check (public, rate limited)
+Route::post('/auth/check-methods', [AuthMethodController::class, 'checkAuthMethods'])
+    ->middleware('throttle:10,1')
+    ->name('auth.check-methods');
+
+// PIN code management (authenticated)
+Route::middleware(['auth'])->prefix('auth')->name('auth.')->group(function () {
+    Route::post('/pin-code', [PinCodeController::class, 'store'])->name('pin-code.store');
+    Route::put('/pin-code', [PinCodeController::class, 'update'])->name('pin-code.update');
+    Route::post('/pin-code/skip', [PinCodeController::class, 'skip'])->name('pin-code.skip');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

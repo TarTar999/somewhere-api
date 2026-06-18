@@ -6,17 +6,22 @@ use App\Models\Invoice;
 use App\Models\ProofOfLocation;
 use App\Models\Receipt;
 use App\Models\Address;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use setasign\Fpdi\Tcpdf\Fpdi;
 
 class PdfService
 {
     protected string $mapboxToken;
+    protected ?DocumentDownloadService $downloadService;
 
-    public function __construct()
+    public function __construct(?DocumentDownloadService $downloadService = null)
     {
         $this->mapboxToken = config('services.mapbox.token', '');
+        $this->downloadService = $downloadService ?? app(DocumentDownloadService::class);
     }
 
     /**
@@ -531,5 +536,234 @@ class PdfService
         \Log::info('Signature format unknown, returning as-is');
         // Unknown format, return as-is
         return $signature;
+    }
+
+    /**
+     * Generate PDF with watermark for a ProofOfLocation document.
+     * The watermark includes user identification and document tracking info.
+     */
+    public function generateWatermarkedProofPdf(ProofOfLocation $proof, ?User $downloadingUser = null): Response
+    {
+        // First generate the standard PDF
+        $proof->load(['user', 'address.street', 'address.itineraryStreet', 'payment']);
+
+        $data = $this->prepareProofData($proof);
+        $data['documentTitle'] = $proof->isProofOfResidence() ? 'ATTESTATION DE RESIDENCE' : 'PLAN DE LOCALISATION';
+
+        // Add watermark data to the view
+        if (config('documents.watermark.enabled', true) && $downloadingUser) {
+            $data['watermark'] = $this->generateWatermarkData($proof, $downloadingUser);
+        }
+
+        $viewName = $proof->isProofOfResidence() ? 'pdf.proof-of-residence' : 'pdf.location-plan';
+
+        $pdf = Pdf::loadView($viewName, $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        // Track the download
+        if ($downloadingUser) {
+            $this->downloadService->trackDownload(
+                $proof,
+                $downloadingUser,
+                'download',
+                config('documents.watermark.enabled', true)
+            );
+        }
+
+        return $pdf->download($proof->document_number . '.pdf');
+    }
+
+    /**
+     * Generate watermark data for a document.
+     */
+    protected function generateWatermarkData(ProofOfLocation $proof, User $user): array
+    {
+        $watermarkText = $this->downloadService->generateWatermarkText($proof, $user);
+
+        return [
+            'text' => $watermarkText,
+            'opacity' => config('documents.watermark.opacity', 0.1),
+            'angle' => config('documents.watermark.angle', -45),
+            'fontSize' => config('documents.watermark.font_size', 48),
+            'color' => config('documents.watermark.color', '#000000'),
+        ];
+    }
+
+    /**
+     * Add watermark to an existing PDF file.
+     * Uses FPDI/TCPDF to overlay watermark text.
+     */
+    public function addWatermarkToPdf(string $pdfPath, string $watermarkText, array $options = []): string
+    {
+        $opacity = $options['opacity'] ?? 0.1;
+        $angle = $options['angle'] ?? -45;
+        $fontSize = $options['fontSize'] ?? 48;
+        $color = $options['color'] ?? '#000000';
+
+        try {
+            // Create new PDF with FPDI
+            $pdf = new Fpdi();
+
+            // Get page count from source PDF
+            $pageCount = $pdf->setSourceFile($pdfPath);
+
+            // Process each page
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                // Import the page
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+
+                // Add page with same orientation
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+                // Use the imported page
+                $pdf->useTemplate($templateId);
+
+                // Add watermark
+                $this->applyWatermarkToPage($pdf, $watermarkText, $size, [
+                    'opacity' => $opacity,
+                    'angle' => $angle,
+                    'fontSize' => $fontSize,
+                    'color' => $color,
+                ]);
+            }
+
+            // Generate output path
+            $outputPath = str_replace('.pdf', '_watermarked.pdf', $pdfPath);
+            $pdf->Output($outputPath, 'F');
+
+            return $outputPath;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to add watermark to PDF', [
+                'path' => $pdfPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Return original path if watermarking fails
+            return $pdfPath;
+        }
+    }
+
+    /**
+     * Apply watermark text to a single PDF page.
+     */
+    protected function applyWatermarkToPage(Fpdi $pdf, string $watermarkText, array $size, array $options): void
+    {
+        $opacity = $options['opacity'];
+        $angle = $options['angle'];
+        $fontSize = $options['fontSize'];
+        $color = $this->hexToRgb($options['color']);
+
+        // Set transparency
+        $pdf->SetAlpha($opacity);
+
+        // Set font
+        $pdf->SetFont('helvetica', '', $fontSize);
+
+        // Set text color
+        $pdf->SetTextColor($color['r'], $color['g'], $color['b']);
+
+        // Calculate center position
+        $centerX = $size['width'] / 2;
+        $centerY = $size['height'] / 2;
+
+        // Start transformation
+        $pdf->StartTransform();
+
+        // Rotate around center
+        $pdf->Rotate($angle, $centerX, $centerY);
+
+        // Get text width to center it
+        $textWidth = $pdf->GetStringWidth($watermarkText);
+        $x = $centerX - ($textWidth / 2);
+        $y = $centerY;
+
+        // Draw the watermark text
+        $pdf->Text($x, $y, $watermarkText);
+
+        // Stop transformation
+        $pdf->StopTransform();
+
+        // Reset transparency
+        $pdf->SetAlpha(1);
+    }
+
+    /**
+     * Convert hex color to RGB array.
+     */
+    protected function hexToRgb(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        return [
+            'r' => hexdec(substr($hex, 0, 2)),
+            'g' => hexdec(substr($hex, 2, 2)),
+            'b' => hexdec(substr($hex, 4, 2)),
+        ];
+    }
+
+    /**
+     * Generate watermarked PDF response with download tracking.
+     */
+    public function downloadWithWatermark(
+        ProofOfLocation $proof,
+        ?User $user = null,
+        string $downloadType = 'download'
+    ): Response {
+        // Generate standard PDF first
+        $pdf = $this->generateProofPdf($proof);
+
+        // If watermarking is enabled and we have a user
+        if (config('documents.watermark.enabled', true) && $user) {
+            // Track the download
+            $this->downloadService->trackDownload($proof, $user, $downloadType, true);
+        }
+
+        return $pdf;
+    }
+
+    /**
+     * Stream PDF for viewing (with optional watermark).
+     */
+    public function streamProofPdf(ProofOfLocation $proof, ?User $viewer = null): Response
+    {
+        $proof->load(['user', 'address.street', 'address.itineraryStreet', 'payment']);
+
+        $data = $this->prepareProofData($proof);
+        $data['documentTitle'] = $proof->isProofOfResidence() ? 'ATTESTATION DE RESIDENCE' : 'PLAN DE LOCALISATION';
+
+        // Add subtle watermark for viewing
+        if (config('documents.watermark.enabled', true) && $viewer) {
+            $data['watermark'] = [
+                'text' => 'VISUALISATION - ' . now()->format('d/m/Y H:i'),
+                'opacity' => 0.05,
+                'angle' => -45,
+                'fontSize' => 36,
+                'color' => '#666666',
+            ];
+
+            // Track as view
+            $this->downloadService->trackDownload($proof, $viewer, 'view', false);
+        }
+
+        $viewName = $proof->isProofOfResidence() ? 'pdf.proof-of-residence' : 'pdf.location-plan';
+
+        $pdf = Pdf::loadView($viewName, $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream($proof->document_number . '.pdf');
+    }
+
+    /**
+     * Get download statistics for a document.
+     */
+    public function getDocumentDownloadStats(ProofOfLocation $proof): array
+    {
+        return $this->downloadService->getDownloadStats($proof);
     }
 }

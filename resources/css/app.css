@@ -7,16 +7,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================
+   SOMEWHERE APP - DESIGN SYSTEM
+   Based on SW Logo (Black/White monogram)
+   ============================================ */
+
 @theme {
+    /* Typography - Inter + Space Grotesk */
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Inter', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    --font-display:
+        'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    /* Border Radius - 8px base grid */
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
 
+    /* Core Color Mapping */
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 
@@ -45,12 +58,14 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
+    /* Chart Colors - Enhanced palette */
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    /* Sidebar Colors */
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -59,77 +74,200 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* SW Brand Colors - Extended */
+    --color-sw-black: var(--sw-black);
+    --color-sw-charcoal: var(--sw-charcoal);
+    --color-sw-slate-900: var(--sw-slate-900);
+    --color-sw-slate-700: var(--sw-slate-700);
+    --color-sw-slate-500: var(--sw-slate-500);
+    --color-sw-slate-300: var(--sw-slate-300);
+    --color-sw-slate-100: var(--sw-slate-100);
+
+    /* Functional Colors */
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+
+    /* Map Colors */
+    --color-map-primary: var(--map-primary);
+    --color-map-marker: var(--map-marker);
+    --color-zone-fill: var(--zone-fill);
+    --color-zone-stroke: var(--zone-stroke);
+    --color-heatmap-low: var(--heatmap-low);
+    --color-heatmap-high: var(--heatmap-high);
+
+    /* Glass Effect */
+    --color-glass: var(--glass);
+    --color-glass-border: var(--glass-border);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    /* Base radius */
+    --radius: 0.5rem;
+
+    /* Core Colors - Light Mode (Warm cream background) */
+    --background: #FAF8F2;
+    --foreground: oklch(0.13 0.01 260);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    --card-foreground: oklch(0.13 0.01 260);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --popover-foreground: oklch(0.13 0.01 260);
+
+    /* Primary - SW Black */
+    --primary: oklch(0.15 0 0);
+    --primary-foreground: oklch(0.99 0 0);
+
+    /* Secondary */
+    --secondary: oklch(0.96 0.005 260);
+    --secondary-foreground: oklch(0.20 0.01 260);
+
+    /* Muted */
+    --muted: oklch(0.96 0.005 260);
+    --muted-foreground: oklch(0.50 0.01 260);
+
+    /* Accent */
+    --accent: oklch(0.96 0.005 260);
+    --accent-foreground: oklch(0.20 0.01 260);
+
+    /* Destructive */
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.99 0 0);
+
+    /* Borders & Inputs */
+    --border: oklch(0.91 0.005 260);
+    --input: oklch(0.91 0.005 260);
+    --ring: oklch(0.15 0 0);
+
+    /* SW Brand Scale */
+    --sw-black: oklch(0.15 0 0);
+    --sw-charcoal: oklch(0.22 0.01 260);
+    --sw-slate-900: oklch(0.18 0.01 260);
+    --sw-slate-700: oklch(0.32 0.01 260);
+    --sw-slate-500: oklch(0.50 0.01 260);
+    --sw-slate-300: oklch(0.75 0.005 260);
+    --sw-slate-100: oklch(0.96 0.005 260);
+
+    /* Functional Colors */
+    --success: oklch(0.62 0.17 145);
+    --success-foreground: oklch(0.99 0 0);
+    --warning: oklch(0.80 0.16 85);
+    --warning-foreground: oklch(0.25 0.05 85);
+    --info: oklch(0.60 0.15 250);
+    --info-foreground: oklch(0.99 0 0);
+
+    /* Map Colors */
+    --map-primary: oklch(0.60 0.15 250);
+    --map-marker: oklch(0.15 0 0);
+    --zone-fill: oklch(0.60 0.15 250 / 0.15);
+    --zone-stroke: oklch(0.50 0.12 250);
+    --heatmap-low: oklch(0.85 0.12 145);
+    --heatmap-high: oklch(0.55 0.22 25);
+
+    /* Glass Effects */
+    --glass: oklch(1 0 0 / 0.85);
+    --glass-border: oklch(0 0 0 / 0.08);
+
+    /* Chart Colors - Vibrant */
+    --chart-1: oklch(0.60 0.15 250);
+    --chart-2: oklch(0.62 0.17 145);
+    --chart-3: oklch(0.80 0.16 85);
+    --chart-4: oklch(0.65 0.20 320);
+    --chart-5: oklch(0.55 0.22 25);
+
+    /* Sidebar - Prospekt style: clean white with subtle accents */
+    --sidebar: oklch(1 0 0);
+    --sidebar-foreground: oklch(0.45 0.01 260);
+    --sidebar-primary: oklch(0.55 0.18 270);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.97 0.015 270);
+    --sidebar-accent-foreground: oklch(0.25 0.02 270);
+    --sidebar-border: oklch(0.94 0.005 260);
+    --sidebar-ring: oklch(0.55 0.18 270);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Core Colors - Dark Mode */
+    --background: oklch(0.12 0.01 260);
+    --foreground: oklch(0.96 0.005 260);
+    --card: oklch(0.15 0.01 260);
+    --card-foreground: oklch(0.96 0.005 260);
+    --popover: oklch(0.15 0.01 260);
+    --popover-foreground: oklch(0.96 0.005 260);
+
+    /* Primary - Inverted for dark */
+    --primary: oklch(0.96 0.005 260);
+    --primary-foreground: oklch(0.12 0.01 260);
+
+    /* Secondary */
+    --secondary: oklch(0.22 0.01 260);
+    --secondary-foreground: oklch(0.96 0.005 260);
+
+    /* Muted */
+    --muted: oklch(0.22 0.01 260);
+    --muted-foreground: oklch(0.65 0.005 260);
+
+    /* Accent */
+    --accent: oklch(0.22 0.01 260);
+    --accent-foreground: oklch(0.96 0.005 260);
+
+    /* Destructive */
+    --destructive: oklch(0.45 0.18 25);
+    --destructive-foreground: oklch(0.96 0 0);
+
+    /* Borders & Inputs */
+    --border: oklch(0.25 0.01 260);
+    --input: oklch(0.25 0.01 260);
+    --ring: oklch(0.96 0.005 260);
+
+    /* SW Brand Scale - Dark */
+    --sw-black: oklch(0.08 0 0);
+    --sw-charcoal: oklch(0.15 0.01 260);
+    --sw-slate-900: oklch(0.12 0.01 260);
+    --sw-slate-700: oklch(0.25 0.01 260);
+    --sw-slate-500: oklch(0.45 0.01 260);
+    --sw-slate-300: oklch(0.65 0.005 260);
+    --sw-slate-100: oklch(0.90 0.005 260);
+
+    /* Functional Colors - Dark */
+    --success: oklch(0.70 0.17 145);
+    --success-foreground: oklch(0.15 0.05 145);
+    --warning: oklch(0.82 0.16 85);
+    --warning-foreground: oklch(0.25 0.05 85);
+    --info: oklch(0.68 0.15 250);
+    --info-foreground: oklch(0.15 0.05 250);
+
+    /* Map Colors - Dark */
+    --map-primary: oklch(0.68 0.15 250);
+    --map-marker: oklch(0.96 0.005 260);
+    --zone-fill: oklch(0.68 0.15 250 / 0.20);
+    --zone-stroke: oklch(0.60 0.12 250);
+    --heatmap-low: oklch(0.70 0.12 145);
+    --heatmap-high: oklch(0.60 0.22 25);
+
+    /* Glass Effects - Dark */
+    --glass: oklch(0.15 0.01 260 / 0.90);
+    --glass-border: oklch(1 0 0 / 0.08);
+
+    /* Chart Colors - Dark */
+    --chart-1: oklch(0.68 0.15 250);
+    --chart-2: oklch(0.70 0.17 145);
+    --chart-3: oklch(0.82 0.16 85);
+    --chart-4: oklch(0.72 0.20 320);
+    --chart-5: oklch(0.60 0.22 25);
+
+    /* Sidebar - Dark */
+    --sidebar: oklch(0.15 0.01 260);
+    --sidebar-foreground: oklch(0.96 0.005 260);
+    --sidebar-primary: oklch(0.96 0.005 260);
+    --sidebar-primary-foreground: oklch(0.12 0.01 260);
+    --sidebar-accent: oklch(0.22 0.01 260);
+    --sidebar-accent-foreground: oklch(0.96 0.005 260);
+    --sidebar-border: oklch(0.25 0.01 260);
+    --sidebar-ring: oklch(0.96 0.005 260);
 }
 
 @layer base {
@@ -138,6 +276,365 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Focus styles */
+    :focus-visible {
+        @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    }
+
+    /* Selection */
+    ::selection {
+        @apply bg-primary text-primary-foreground;
+    }
+}
+
+/* ============================================
+   MAP-CENTERED LAYOUT UTILITIES
+   ============================================ */
+
+@layer components {
+    /* Glass Panel Effect - using raw CSS for compatibility */
+    .glass-panel {
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    /* Floating Card */
+    .floating-card {
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        border-radius: var(--radius-xl);
+        padding: 1rem;
+    }
+
+    /* Map Overlay Header */
+    .map-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        padding: 0.75rem 1rem;
+    }
+
+    /* Stats Card */
+    .stats-card {
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        border-radius: var(--radius-xl);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .stats-card-value {
+        @apply text-2xl font-bold font-display tracking-tight;
+    }
+
+    .stats-card-label {
+        @apply text-sm text-muted-foreground;
+    }
+
+    /* Quick Action Button */
+    .quick-action-btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all;
+        @apply bg-primary text-primary-foreground hover:opacity-90 active:scale-95;
+        @apply shadow-md hover:shadow-lg;
+    }
+
+    /* Map Search Bar */
+    .map-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 9999px;
+        padding: 0.625rem 1rem;
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    .map-search-bar:focus-within {
+        @apply ring-2 ring-indigo-500/30 border-indigo-500;
+    }
+
+    .map-search-bar input {
+        @apply flex-1 bg-transparent border-none outline-none placeholder:text-muted-foreground;
+    }
+
+    /* Zone Marker */
+    .zone-marker {
+        @apply inline-flex items-center justify-center rounded-full;
+        @apply bg-sw-black text-white font-semibold text-sm;
+        @apply shadow-lg border-2 border-white;
+    }
+
+    /* Bottom Sheet (Mobile) */
+    .bottom-sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        border-top-left-radius: var(--radius-2xl);
+        border-top-right-radius: var(--radius-2xl);
+        transition: transform 0.3s ease-out;
+    }
+
+    .bottom-sheet-handle {
+        @apply w-10 h-1 rounded-full bg-muted-foreground/30 mx-auto mt-3 mb-2;
+    }
+
+    /* Side Drawer */
+    .side-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        width: 100%;
+        max-width: 28rem;
+        background-color: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-left: 1px solid var(--glass-border);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        transition: transform 0.3s ease-out;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+    }
+
+    .status-badge-success {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success;
+    }
+
+    .status-badge-warning {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning-foreground;
+    }
+
+    .status-badge-error {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/15 text-destructive;
+    }
+
+    .status-badge-info {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-info/15 text-info;
+    }
+
+    /* Skeleton Loading */
+    .skeleton {
+        @apply animate-pulse bg-muted rounded;
+    }
+
+    .skeleton-text {
+        @apply animate-pulse bg-muted rounded h-4 w-full;
+    }
+
+    .skeleton-title {
+        @apply animate-pulse bg-muted rounded h-6 w-3/4;
+    }
+
+    .skeleton-avatar {
+        @apply animate-pulse bg-muted rounded-full h-10 w-10;
+    }
+}
+
+/* ============================================
+   LEAFLET MAP CUSTOMIZATIONS
+   ============================================ */
+
+@layer utilities {
+    /* Hide Leaflet default controls for custom UI */
+    .leaflet-control-container .leaflet-top.leaflet-left {
+        top: 80px;
+    }
+
+    /* Custom marker styles */
+    .sw-marker {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--sw-black);
+        color: white;
+        border-radius: 9999px;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        border: 2px solid white;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    /* Cluster marker - SomeWhere Blue-Violet */
+    .sw-cluster {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        color: white;
+        border-radius: 9999px;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4), 0 2px 6px rgba(139, 92, 246, 0.3);
+        border: 3px solid white;
+        font-weight: 700;
+        font-size: 0.875rem;
+        width: 40px;
+        height: 40px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .sw-cluster:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5), 0 4px 10px rgba(139, 92, 246, 0.4);
+    }
+
+    .sw-cluster-small {
+        width: 34px;
+        height: 34px;
+        font-size: 12px;
+        border-width: 2px;
+    }
+
+    .sw-cluster-medium {
+        width: 46px;
+        height: 46px;
+        font-size: 14px;
+    }
+
+    .sw-cluster-large {
+        width: 56px;
+        height: 56px;
+        font-size: 16px;
+        border-width: 4px;
+    }
+
+    /* Zone polygon styles */
+    .sw-zone-polygon {
+        fill: var(--zone-fill);
+        stroke: var(--zone-stroke);
+        stroke-width: 2;
+    }
+
+    /* Map fade animation */
+    .map-fade-in {
+        animation: mapFadeIn 0.5s ease-out;
+    }
+
+    @keyframes mapFadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Panel slide animations */
+    .slide-in-right {
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    .slide-in-bottom {
+        animation: slideInBottom 0.3s ease-out;
+    }
+
+    @keyframes slideInBottom {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    /* Pulse animation for markers - Blue-Violet */
+    .marker-pulse {
+        animation: markerPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes markerPulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4), 0 0 0 0 rgba(99, 102, 241, 0.5);
+        }
+        50% {
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5), 0 0 0 12px rgba(139, 92, 246, 0);
+        }
+    }
+}
+
+/* ============================================
+   LEAFLET DRAW PLUGIN STYLES
+   ============================================ */
+
+.leaflet-draw-toolbar a {
+    @apply bg-white hover:bg-gray-50 border-gray-200;
+}
+
+.leaflet-draw-actions a {
+    @apply bg-sw-black text-white hover:bg-sw-charcoal;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+@layer utilities {
+    /* Hide on mobile, show on desktop */
+    .desktop-only {
+        @apply hidden md:block;
+    }
+
+    /* Show on mobile, hide on desktop */
+    .mobile-only {
+        @apply block md:hidden;
+    }
+
+    /* Safe area padding for mobile */
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .safe-area-top {
+        padding-top: env(safe-area-inset-top);
     }
 }

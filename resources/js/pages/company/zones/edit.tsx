@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Circle, Hexagon, ArrowLeft, Save, Undo2 } from 'lucide-react';
 import { Link, useForm } from '@inertiajs/react';
 import type { CompanyRole } from '@/types/company';
+import 'leaflet/dist/leaflet.css';
 
 interface LabelItem {
     id: number;
@@ -97,10 +98,7 @@ function ZoneMap({
     } | null>(null);
 
     useEffect(() => {
-        Promise.all([
-            import('react-leaflet'),
-            import('leaflet/dist/leaflet.css'),
-        ]).then(([mod]) => {
+        import('react-leaflet').then((mod) => {
             setMapComponents({
                 MapContainer: mod.MapContainer,
                 TileLayer: mod.TileLayer,

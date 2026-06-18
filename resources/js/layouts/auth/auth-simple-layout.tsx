@@ -9,29 +9,39 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
+        <div className="min-h-svh flex items-center justify-center bg-[#F8FAFF] p-4 md:p-8">
+            {/* Subtle background pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:20px_20px] opacity-40" />
+
+            <div className="relative w-full max-w-md">
+                {/* Card */}
+                <div className="bg-white rounded-2xl shadow-xl shadow-indigo-500/5 border border-gray-100 p-8 md:p-10">
+                    {/* Logo & Header */}
+                    <div className="flex flex-col items-center mb-8">
                         <Link
                             href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
+                            className="flex items-center gap-3 mb-6 group"
                         >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
+                            <AppLogoIcon className="h-12 w-12" />
+                            <span className="text-xl font-bold text-gray-900">SomeWhere App</span>
                         </Link>
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
+                        <div className="text-center">
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
+                            <p className="text-gray-500 text-sm">
                                 {description}
                             </p>
                         </div>
                     </div>
+
+                    {/* Form Content */}
                     {children}
                 </div>
+
+                {/* Footer */}
+                <p className="text-center text-xs text-gray-400 mt-6">
+                    © {new Date().getFullYear()} SomeWhere App. Tous droits réservés.
+                </p>
             </div>
         </div>
     );

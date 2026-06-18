@@ -35,13 +35,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $pinSetupSkipped = $request->session()->get('pin_setup_skipped', false);
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'needs_pin_setup' => $user && $user->needsPinSetup() && !$pinSetupSkipped,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'mapbox' => [
+                'token' => config('services.mapbox.token'),
+                'style' => config('services.mapbox.style'),
+                'custom_style_url' => config('services.mapbox.custom_style_url'),
+            ],
         ];
     }
 }

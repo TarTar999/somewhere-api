@@ -44,7 +44,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
 
-        // Custom authentication using phone number
+        // Custom authentication using phone number with password or PIN code
         Fortify::authenticateUsing(function (Request $request) {
             $phone = SmsService::normalizePhone($request->phone);
 
@@ -54,8 +54,23 @@ class FortifyServiceProvider extends ServiceProvider
                 ->orWhere('phone', '+' . $phone)
                 ->first();
 
-            if ($user && Hash::check($request->password, $user->password)) {
-                return $user;
+            if (!$user) {
+                return null;
+            }
+
+            // Check if authenticating with PIN code
+            if ($request->filled('pin_code')) {
+                if ($user->canAuthenticateWithPin() && Hash::check($request->pin_code, $user->getRawOriginal('pin_code'))) {
+                    return $user;
+                }
+                return null;
+            }
+
+            // Check if authenticating with password
+            if ($request->filled('password')) {
+                if ($user->canAuthenticateWithPassword() && Hash::check($request->password, $user->password)) {
+                    return $user;
+                }
             }
 
             return null;
