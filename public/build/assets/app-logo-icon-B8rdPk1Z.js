@@ -1,0 +1,1 @@
+import{c,j as n}from"./app-BhZwTPDZ.js";function m(o){const e=c.c(6);let t,s;e[0]!==o?({className:t,...s}=o,e[0]=o,e[1]=t,e[2]=s):(t=e[1],s=e[2]);let i;return e[3]!==t||e[4]!==s?(i=n.jsx("img",{src:"/images/icon.png",alt:"SW",className:t,...s}),e[3]=t,e[4]=s,e[5]=i):i=e[5],i}export{m as A};
