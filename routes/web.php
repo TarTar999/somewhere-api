@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthMethodController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PinCodeController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\ShareController;
@@ -33,6 +34,11 @@ Route::prefix('share')->name('share.')->group(function () {
 Route::post('/auth/check-methods', [AuthMethodController::class, 'checkAuthMethods'])
     ->middleware('throttle:10,1')
     ->name('auth.check-methods');
+
+// Custom login route (overrides Fortify's default to support PIN code)
+Route::post('/login', [LoginController::class, 'store'])
+    ->middleware(['guest', 'throttle:login'])
+    ->name('login.store');
 
 // PIN code management (authenticated)
 Route::middleware(['auth'])->prefix('auth')->name('auth.')->group(function () {

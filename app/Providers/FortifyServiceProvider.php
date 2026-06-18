@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Services\SmsService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -55,13 +56,31 @@ class FortifyServiceProvider extends ServiceProvider
                 ->first();
 
             if (!$user) {
+                \Log::info('Auth: User not found for phone', ['phone' => $request->phone]);
                 return null;
             }
 
             // Check if authenticating with PIN code
             if ($request->filled('pin_code')) {
-                if ($user->canAuthenticateWithPin() && Hash::check($request->pin_code, $user->getRawOriginal('pin_code'))) {
-                    return $user;
+                \Log::info('Auth: PIN login attempt', [
+                    'user_id' => $user->id,
+                    'can_auth_with_pin' => $user->canAuthenticateWithPin(),
+                    'pin_length' => strlen($request->pin_code),
+                ]);
+
+                if ($user->canAuthenticateWithPin()) {
+                    // Get the raw PIN hash from database
+                    $pinHash = $user->getAttributes()['pin_code'] ?? null;
+                    $pinMatches = $pinHash && Hash::check($request->pin_code, $pinHash);
+
+                    \Log::info('Auth: PIN check result', [
+                        'has_hash' => !empty($pinHash),
+                        'matches' => $pinMatches,
+                    ]);
+
+                    if ($pinMatches) {
+                        return $user;
+                    }
                 }
                 return null;
             }

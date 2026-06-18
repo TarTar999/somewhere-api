@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { PinInput } from '@/components/auth/pin-input';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
-import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Head, router } from '@inertiajs/react';
 import { Phone, Lock, ArrowLeft } from 'lucide-react';
@@ -42,6 +41,7 @@ export default function Login({
     const [isCheckingMethods, setIsCheckingMethods] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const credentialsFormRef = useRef<HTMLFormElement>(null);
 
     const handlePhoneSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,7 +97,7 @@ export default function Login({
             return;
         }
 
-        router.post(store(), data, {
+        router.post('/login', data, {
             onError: (errors) => {
                 setErrors(errors);
                 setIsSubmitting(false);
@@ -114,6 +114,46 @@ export default function Login({
         setPinCode('');
         setAuthMethods(null);
         setErrors({});
+    };
+
+    const handlePinChange = (value: string) => {
+        setPinCode(value);
+        // Auto-submit when PIN is complete (6 digits)
+        if (value.length === 6 && !isSubmitting) {
+            // Submit directly with the value instead of relying on state
+            setTimeout(() => {
+                submitWithPin(value);
+            }, 200);
+        }
+    };
+
+    const submitWithPin = (pin: string) => {
+        if (isSubmitting) return;
+
+        console.log('submitWithPin called with:', { phone, pin, remember });
+
+        setErrors({});
+        setIsSubmitting(true);
+
+        router.post('/login', {
+            phone,
+            pin_code: pin,
+            remember,
+        }, {
+            onError: (errors) => {
+                console.log('Login error:', errors);
+                setErrors(errors);
+                setIsSubmitting(false);
+                setPinCode(''); // Clear PIN on error
+            },
+            onSuccess: () => {
+                console.log('Login success!');
+            },
+            onFinish: () => {
+                console.log('Login finished');
+                setIsSubmitting(false);
+            },
+        });
     };
 
     const renderPhoneStep = () => (
@@ -168,7 +208,7 @@ export default function Login({
     );
 
     const renderCredentialsStep = () => (
-        <form onSubmit={handleCredentialsSubmit} className="flex flex-col gap-5">
+        <form ref={credentialsFormRef} onSubmit={handleCredentialsSubmit} className="flex flex-col gap-5">
             {/* Phone display with back button */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                 <button
@@ -192,7 +232,7 @@ export default function Login({
                     </Label>
                     <PinInput
                         value={pinCode}
-                        onChange={setPinCode}
+                        onChange={handlePinChange}
                         disabled={isSubmitting}
                         error={errors.pin_code}
                     />
