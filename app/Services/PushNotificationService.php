@@ -17,7 +17,6 @@ class PushNotificationService
 {
     private $messaging;
     private bool $isConfigured = false;
-    private static bool $warningLogged = false;
 
     public function __construct()
     {
@@ -29,6 +28,12 @@ class PushNotificationService
      */
     private function initializeFirebase(): void
     {
+        // Check if Firebase SDK is installed
+        if (!class_exists('Kreait\Firebase\Factory')) {
+            $this->isConfigured = false;
+            return;
+        }
+
         try {
             $credentialsPath = config('firebase.credentials_path');
             $credentialsBase64 = config('firebase.credentials_base64');
@@ -43,14 +48,12 @@ class PushNotificationService
                 $this->messaging = $factory->createMessaging();
                 $this->isConfigured = true;
             } else {
-                // Only log this warning once per process to avoid log spam
-                if (!self::$warningLogged) {
-                    Log::warning('Firebase credentials not configured - push notifications disabled');
-                    self::$warningLogged = true;
-                }
+                // Firebase not configured - this is OK in development
+                $this->isConfigured = false;
             }
         } catch (\Exception $e) {
             Log::error('Failed to initialize Firebase: ' . $e->getMessage());
+            $this->isConfigured = false;
         }
     }
 
