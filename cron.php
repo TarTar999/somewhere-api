@@ -8,6 +8,9 @@
 // Chemin vers le dossier de l'application
 $basePath = __DIR__;
 
+// Chemin vers PHP sur OVH
+$phpPath = '/usr/local/php8.4/bin/php';
+
 // Changer le répertoire de travail
 chdir($basePath);
 
@@ -15,7 +18,7 @@ chdir($basePath);
 $output = [];
 $returnCode = 0;
 
-exec('php artisan schedule:run 2>&1', $output, $returnCode);
+exec($phpPath . ' artisan schedule:run 2>&1', $output, $returnCode);
 
 // Logger le résultat (optionnel)
 $logFile = $basePath . '/storage/logs/cron.log';

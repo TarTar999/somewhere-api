@@ -32,7 +32,7 @@ class AddressController extends Controller
     public function index(): JsonResponse
     {
         $addresses = auth()->user()->addresses()
-            ->with(['street', 'itineraryStreet'])
+            ->with(['street', 'itineraryStreet', 'itineraryIntersection'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -193,7 +193,7 @@ class AddressController extends Controller
             return $this->error('Unauthorized', 403);
         }
 
-        $address->load(['street', 'itineraryStreet']);
+        $address->load(['street', 'itineraryStreet', 'itineraryIntersection']);
 
         return $this->success($this->formatAddress($address));
     }
@@ -593,6 +593,10 @@ class AddressController extends Controller
             'itinerary.*.order' => 'nullable|integer|min:0',
             'itineraryStreetId' => 'nullable|exists:streets,id',
             'itineraryDescription' => 'nullable|string|max:1000',
+            'intersectionId' => 'nullable|exists:intersections,id',
+            'intersectionName' => 'nullable|string|max:255',
+            'transportModes' => 'nullable|array',
+            'transportModes.*' => 'string|in:walk,moto,taxi',
         ]);
 
         // Sort points by order if provided, otherwise use array order
@@ -608,6 +612,9 @@ class AddressController extends Controller
             'itinerary' => $points,
             'itinerary_street_id' => $request->itineraryStreetId,
             'itinerary_description' => $request->itineraryDescription,
+            'itinerary_intersection_id' => $request->intersectionId,
+            'itinerary_intersection_name' => $request->intersectionName,
+            'itinerary_transport_modes' => $request->transportModes,
         ]);
 
         // Calculate and save distance
@@ -616,7 +623,7 @@ class AddressController extends Controller
             $address->update(['itinerary_distance' => $distance]);
         }
 
-        $address->load(['street', 'itineraryStreet']);
+        $address->load(['street', 'itineraryStreet', 'itineraryIntersection']);
 
         return $this->success($this->formatAddress($address), 'Itinerary updated successfully');
     }
@@ -635,6 +642,9 @@ class AddressController extends Controller
             'itinerary_street_id' => null,
             'itinerary_description' => null,
             'itinerary_distance' => null,
+            'itinerary_intersection_id' => null,
+            'itinerary_intersection_name' => null,
+            'itinerary_transport_modes' => null,
         ]);
 
         return $this->success(null, 'Itinerary deleted successfully');
@@ -681,6 +691,17 @@ class AddressController extends Controller
                         'displayName' => $address->itineraryStreet->display_name,
                     ]
                     : null,
+                'intersection' => $address->relationLoaded('itineraryIntersection') && $address->itineraryIntersection
+                    ? [
+                        'id' => $address->itineraryIntersection->id,
+                        'name' => $address->itineraryIntersection->name,
+                        'lat' => $address->itineraryIntersection->lat,
+                        'lng' => $address->itineraryIntersection->lng,
+                    ]
+                    : null,
+                'intersectionId' => $address->itinerary_intersection_id,
+                'intersectionName' => $address->itinerary_intersection_name,
+                'transportModes' => $address->itinerary_transport_modes,
             ];
         } else {
             $data['itinerary'] = null;

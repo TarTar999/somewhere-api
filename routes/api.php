@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\DeliveryRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DomiciliationController;
+use App\Http\Controllers\Api\V1\IntersectionController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -268,6 +269,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // Itinerary (custom path) management
         Route::put('{address}/itinerary', [AddressController::class, 'updateItinerary']);
         Route::delete('{address}/itinerary', [AddressController::class, 'deleteItinerary']);
+    });
+
+    // Intersections (carrefours)
+    Route::prefix('intersections')->group(function () {
+        Route::get('nearby', [IntersectionController::class, 'nearby']);
+        Route::post('/', [IntersectionController::class, 'store']);
     });
 
     // Collections

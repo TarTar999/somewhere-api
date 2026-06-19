@@ -43,6 +43,9 @@ class Address extends Model
         'itinerary_street_id',
         'itinerary_description',
         'itinerary_distance',
+        'itinerary_intersection_id',
+        'itinerary_intersection_name',
+        'itinerary_transport_modes',
     ];
 
     protected function casts(): array
@@ -54,6 +57,7 @@ class Address extends Model
             'honor_declaration' => 'boolean',
             'is_non_habitation' => 'boolean',
             'itinerary' => 'array',
+            'itinerary_transport_modes' => 'array',
         ];
     }
 
@@ -122,6 +126,11 @@ class Address extends Model
     public function itineraryStreet(): BelongsTo
     {
         return $this->belongsTo(Street::class, 'itinerary_street_id');
+    }
+
+    public function itineraryIntersection(): BelongsTo
+    {
+        return $this->belongsTo(Intersection::class, 'itinerary_intersection_id');
     }
 
     public function collections(): BelongsToMany
@@ -218,6 +227,7 @@ class Address extends Model
             'pointsCount' => count($this->itinerary),
             'description' => $this->itinerary_description,
             'distance' => $this->itinerary_distance,
+            'distanceFormatted' => $this->itinerary_distance ? $this->itinerary_distance . ' m' : null,
             'destinationStreet' => $this->relationLoaded('itineraryStreet') && $this->itineraryStreet
                 ? [
                     'id' => $this->itineraryStreet->id,
@@ -225,6 +235,9 @@ class Address extends Model
                     'displayName' => $this->itineraryStreet->display_name,
                 ]
                 : null,
+            'intersectionId' => $this->itinerary_intersection_id,
+            'intersectionName' => $this->itinerary_intersection_name,
+            'transportModes' => $this->itinerary_transport_modes,
         ];
     }
 
