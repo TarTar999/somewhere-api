@@ -22,7 +22,8 @@ class AccountController extends Controller
     public function requestDeletion(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'password' => 'required|string',
+            'password' => 'nullable|string',
+            'pin_code' => 'nullable|string|size:6',
             'reason' => 'nullable|string|max:500',
         ]);
 
@@ -33,9 +34,9 @@ class AccountController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        // Verify password
-        if (!Hash::check($request->password, $user->password)) {
-            return $this->error('Invalid password', 401);
+        // Verify credentials (PIN or password)
+        if (!$this->verifyUserCredentials($user, $request)) {
+            return $this->error('Code PIN ou mot de passe incorrect', 401);
         }
 
         // Check if deletion already requested
@@ -67,7 +68,8 @@ class AccountController extends Controller
     public function cancelDeletion(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'password' => 'required|string',
+            'password' => 'nullable|string',
+            'pin_code' => 'nullable|string|size:6',
         ]);
 
         if ($validator->fails()) {
@@ -77,9 +79,9 @@ class AccountController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        // Verify password
-        if (!Hash::check($request->password, $user->password)) {
-            return $this->error('Invalid password', 401);
+        // Verify credentials (PIN or password)
+        if (!$this->verifyUserCredentials($user, $request)) {
+            return $this->error('Code PIN ou mot de passe incorrect', 401);
         }
 
         if (!$user->hasPendingDeletion()) {
@@ -96,12 +98,13 @@ class AccountController extends Controller
     }
 
     /**
-     * Immediately delete account (requires password confirmation)
+     * Immediately delete account (requires PIN or password confirmation)
      */
     public function deleteImmediately(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'password' => 'required|string',
+            'password' => 'nullable|string',
+            'pin_code' => 'nullable|string|size:6',
             'confirmation' => 'required|string|in:DELETE_MY_ACCOUNT',
         ]);
 
@@ -112,9 +115,9 @@ class AccountController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        // Verify password
-        if (!Hash::check($request->password, $user->password)) {
-            return $this->error('Invalid password', 401);
+        // Verify credentials (PIN or password)
+        if (!$this->verifyUserCredentials($user, $request)) {
+            return $this->error('Code PIN ou mot de passe incorrect', 401);
         }
 
         // Revoke all tokens
@@ -227,5 +230,33 @@ class AccountController extends Controller
         ];
 
         return $this->success($data, 'Data exported successfully');
+    }
+
+    /**
+     * Verify user credentials (PIN code or password)
+     */
+    protected function verifyUserCredentials(User $user, Request $request): bool
+    {
+        // Check if any credential is provided
+        if (!$request->filled('pin_code') && !$request->filled('password')) {
+            return false;
+        }
+
+        // Verify PIN code
+        if ($request->filled('pin_code') && $user->canAuthenticateWithPin()) {
+            $pinHash = $user->getAttributes()['pin_code'] ?? null;
+            if ($pinHash && Hash::check($request->pin_code, $pinHash)) {
+                return true;
+            }
+        }
+
+        // Verify password
+        if ($request->filled('password') && $user->canAuthenticateWithPassword()) {
+            if (Hash::check($request->password, $user->password)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
