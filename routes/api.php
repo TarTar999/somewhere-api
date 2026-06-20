@@ -184,6 +184,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('signature', [ProfileController::class, 'getSignature']);
         Route::post('signature', [ProfileController::class, 'updateSignature']);
         Route::delete('signature', [ProfileController::class, 'deleteSignature']);
+
+        // Auth status (PIN, password)
+        Route::get('auth-status', [ProfileController::class, 'getAuthStatus']);
+
+        // PIN code management
+        Route::post('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'store']);
+        Route::put('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'update']);
+        Route::delete('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'destroy']);
     });
 
     // Account management

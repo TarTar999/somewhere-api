@@ -225,4 +225,21 @@ class ProfileController extends Controller
             'signature' => $user->signature, // Will be null if not set
         ]);
     }
+
+    /**
+     * Get user authentication methods status
+     * Returns which auth methods are available (password, PIN) and if PIN setup is needed
+     */
+    public function getAuthStatus(): JsonResponse
+    {
+        $user = auth()->user();
+
+        return $this->success([
+            'authMethods' => $user->getAuthMethods(),
+            'needsPinSetup' => $user->needsPinSetup(),
+            'isPasswordless' => $user->isPasswordless(),
+            'hasPinCode' => $user->canAuthenticateWithPin(),
+            'hasPassword' => $user->canAuthenticateWithPassword(),
+        ]);
+    }
 }
