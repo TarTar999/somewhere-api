@@ -177,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('validate', [AuthController::class, 'validate']);
         Route::get('profile', [ProfileController::class, 'show']);
         Route::get('avatars', [ProfileController::class, 'getAvatarConfig']);
         Route::put('users/{user}', [ProfileController::class, 'update']);

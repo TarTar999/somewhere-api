@@ -274,4 +274,24 @@ class AuthController extends Controller
 
         return $this->success($tokenData, 'Login successful');
     }
+
+    /**
+     * Validate current token (silent check)
+     * Returns 200 if token is valid, 401 otherwise
+     */
+    public function validate(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return $this->error('Token invalid', 401);
+        }
+
+        return $this->success([
+            'valid' => true,
+            'user_id' => $user->id,
+            'authMethods' => $user->getAuthMethods(),
+            'needsPinSetup' => $user->needsPinSetup(),
+        ], 'Token valid');
+    }
 }

@@ -7,24 +7,34 @@ use App\Models\User;
 
 class TokenService
 {
-    public function createTokenPair(User $user, ?string $deviceName = null, ?string $deviceId = null): array
+    public function createTokenPair(User $user, ?string $deviceName = null, ?string $deviceId = null, bool $isMobile = true): array
     {
-        // Create access token with Sanctum (expires in 60 min)
+        // Mobile: 7 days access token, 90 days refresh token
+        // Web: 60 minutes access token, 30 days refresh token
+        $accessTokenMinutes = $isMobile
+            ? (int) config('auth.mobile_access_token_ttl', 7 * 24 * 60)  // 7 days
+            : (int) config('auth.web_access_token_ttl', 60);             // 60 minutes
+
+        $refreshTokenDays = $isMobile
+            ? (int) config('auth.mobile_refresh_token_ttl', 90)  // 90 days
+            : (int) config('auth.web_refresh_token_ttl', 30);    // 30 days
+
+        // Create access token with Sanctum
         $accessToken = $user->createToken(
             $deviceName ?? 'mobile-app',
             ['*'],
-            now()->addMinutes(60)
+            now()->addMinutes($accessTokenMinutes)
         );
 
-        // Create refresh token (expires in 30 days)
-        $refreshTokenData = RefreshToken::generate($user, $deviceName, $deviceId, 30);
+        // Create refresh token
+        $refreshTokenData = RefreshToken::generate($user, $deviceName, $deviceId, $refreshTokenDays);
 
         return [
             'user' => $this->formatUser($user),
             'access_token' => $accessToken->plainTextToken,
             'refresh_token' => $refreshTokenData['plain_token'],
             'token_type' => 'Bearer',
-            'expires_in' => 3600, // 60 minutes in seconds
+            'expires_in' => $accessTokenMinutes * 60, // in seconds
         ];
     }
 

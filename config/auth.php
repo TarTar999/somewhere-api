@@ -116,4 +116,23 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Token Lifetimes (API)
+    |--------------------------------------------------------------------------
+    |
+    | These values control the lifetime of API tokens for mobile and web apps.
+    | Mobile apps get longer-lived tokens for better user experience.
+    | Values are in minutes for access tokens and days for refresh tokens.
+    |
+    */
+
+    // Mobile app tokens (longer for persistent sessions)
+    'mobile_access_token_ttl' => env('MOBILE_ACCESS_TOKEN_TTL', 7 * 24 * 60),   // 7 days in minutes
+    'mobile_refresh_token_ttl' => env('MOBILE_REFRESH_TOKEN_TTL', 90),          // 90 days
+
+    // Web app tokens (shorter for security)
+    'web_access_token_ttl' => env('WEB_ACCESS_TOKEN_TTL', 60),                  // 60 minutes
+    'web_refresh_token_ttl' => env('WEB_REFRESH_TOKEN_TTL', 30),                // 30 days
+
 ];
