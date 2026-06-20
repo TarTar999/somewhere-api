@@ -351,6 +351,16 @@ class User extends Authenticatable
 
     public function needsPinSetup(): bool
     {
-        return $this->canAuthenticateWithPassword() && !$this->canAuthenticateWithPin();
+        // User needs PIN setup if they don't have PIN configured yet
+        // This applies to both password and passwordless users
+        return !$this->canAuthenticateWithPin();
+    }
+
+    /**
+     * Check if user was registered without password (mobile passwordless flow)
+     */
+    public function isPasswordless(): bool
+    {
+        return empty($this->password);
     }
 }

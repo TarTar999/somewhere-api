@@ -33,7 +33,45 @@ class AuthController extends Controller
             ->orWhere('phone', '+' . $phone)
             ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
+            return $this->error('Identifiants invalides', 401);
+        }
+
+        $authenticated = false;
+
+        // Check PIN code authentication
+        if ($request->filled('pin_code')) {
+            if (!$user->canAuthenticateWithPin()) {
+                return $this->error('Code PIN non configuré. Connectez-vous via OTP pour créer votre code PIN.', 401, [
+                    'error_code' => 'PIN_NOT_CONFIGURED',
+                    'authMethods' => $user->getAuthMethods(),
+                ]);
+            }
+
+            $pinHash = $user->getAttributes()['pin_code'] ?? null;
+            if ($pinHash && Hash::check($request->pin_code, $pinHash)) {
+                $authenticated = true;
+            } else {
+                return $this->error('Code PIN incorrect', 401);
+            }
+        }
+        // Check password authentication
+        elseif ($request->filled('password')) {
+            if (!$user->canAuthenticateWithPassword()) {
+                return $this->error('Aucun mot de passe configuré. Utilisez votre code PIN ou connectez-vous via OTP.', 401, [
+                    'error_code' => 'PASSWORD_NOT_SET',
+                    'authMethods' => $user->getAuthMethods(),
+                ]);
+            }
+
+            if (Hash::check($request->password, $user->password)) {
+                $authenticated = true;
+            } else {
+                return $this->error('Mot de passe incorrect', 401);
+            }
+        }
+
+        if (!$authenticated) {
             return $this->error('Identifiants invalides', 401);
         }
 
@@ -43,28 +81,42 @@ class AuthController extends Controller
             $request->device_id
         );
 
+        // Include auth methods info
+        $tokenData['authMethods'] = $user->getAuthMethods();
+        $tokenData['needsPinSetup'] = $user->needsPinSetup();
+
         return $this->success($tokenData, 'Login successful');
     }
 
     public function register(RegisterRequest $request): JsonResponse
     {
         // Phone is already normalized by RegisterRequest::prepareForValidation()
-        $user = User::create([
+        $userData = [
             'first_name' => $request->firstName,
             'last_name' => $request->lastName,
             'name' => $request->firstName . ' ' . $request->lastName,
-            'email' => $request->email, // Can be null
+            'email' => $request->email,
             'phone' => $request->phone,
-            'password' => $request->password,
             'sex' => $request->civility,
             'cni_number' => $request->cni,
             'nui_number' => $request->nui,
             'cni_expiration_date' => $request->cniExpiration,
-        ]);
+        ];
+
+        // Only set password if provided (passwordless registration for mobile)
+        if ($request->filled('password')) {
+            $userData['password'] = $request->password;
+        }
+
+        $user = User::create($userData);
 
         // Settings and default collections are created by UserObserver
 
         $tokenData = $this->tokenService->createTokenPair($user);
+
+        // Include auth methods info for client to know what's available
+        $tokenData['authMethods'] = $user->getAuthMethods();
+        $tokenData['needsPinSetup'] = $user->needsPinSetup();
 
         return $this->success($tokenData, 'Registration successful', 201);
     }
@@ -214,6 +266,11 @@ class AuthController extends Controller
             $request->device_name,
             $request->device_id
         );
+
+        // Include auth methods info for client to know PIN setup is needed
+        $tokenData['authMethods'] = $user->getAuthMethods();
+        $tokenData['needsPinSetup'] = $user->needsPinSetup();
+        $tokenData['isPasswordless'] = $user->isPasswordless();
 
         return $this->success($tokenData, 'Login successful');
     }

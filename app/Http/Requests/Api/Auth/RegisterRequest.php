@@ -34,7 +34,7 @@ class RegisterRequest extends FormRequest
             'nui' => ['nullable', 'string', 'max:50'],
             'cniExpiration' => ['nullable', 'date'],
             'email' => ['nullable', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', Password::min(6)],
+            'password' => ['nullable', 'string', Password::min(6)],
             'quartier' => ['nullable', 'string', 'max:255'],
             'sousQuartier' => ['nullable', 'string', 'max:255'],
             'lieuDit' => ['nullable', 'string', 'max:255'],
@@ -51,7 +51,7 @@ class RegisterRequest extends FormRequest
             'firstName.required' => 'Le prénom est requis.',
             'lastName.required' => 'Le nom est requis.',
             'email.unique' => 'Cette adresse email est déjà utilisée.',
-            'password.required' => 'Le mot de passe est requis.',
+            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
         ];
     }
 }
