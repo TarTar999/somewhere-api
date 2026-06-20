@@ -43,6 +43,10 @@ use Illuminate\Support\Facades\Route;
 
 // Public auth routes
 Route::prefix('auth')->group(function () {
+    // Check available auth methods for a phone number
+    Route::post('check-methods', [\App\Http\Controllers\Auth\AuthMethodController::class, 'checkAuthMethods'])
+        ->middleware('throttle:10,1');
+
     // Traditional email/password login
     Route::post('login', [AuthController::class, 'login']);
 
