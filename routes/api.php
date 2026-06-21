@@ -440,3 +440,38 @@ Route::middleware('auth:sanctum')->group(function () {
     // Accept company invitation (outside company middleware)
     Route::post('companies/invitation/{token}/accept', [CompanyMemberController::class, 'acceptInvitation']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| V1 Compatibility - Internal Forwarding
+|--------------------------------------------------------------------------
+|
+| Forward all /api/v1/* requests to /api/* for backward compatibility
+| with mobile apps using the old URL structure.
+| This forwards internally without HTTP redirect to preserve headers and body.
+|
+*/
+Route::any('v1/{path}', function ($path, \Illuminate\Http\Request $request) {
+    // Create a new request with the corrected path
+    $newPath = '/api/' . $path;
+
+    // Clone the request with new URI
+    $newRequest = $request->duplicate(
+        $request->query->all(),
+        $request->request->all(),
+        $request->attributes->all(),
+        $request->cookies->all(),
+        $request->files->all(),
+        array_merge($request->server->all(), [
+            'REQUEST_URI' => $newPath . ($request->getQueryString() ? '?' . $request->getQueryString() : ''),
+            'PATH_INFO' => $newPath,
+        ])
+    );
+
+    // Set JSON content if present
+    if ($request->isJson()) {
+        $newRequest->headers->set('Content-Type', 'application/json');
+    }
+
+    return app()->handle($newRequest);
+})->where('path', '.*');
