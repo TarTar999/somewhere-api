@@ -225,7 +225,7 @@
         }
         .map-image {
             width: 100%;
-            height: 420px;
+            height: 300px;
             display: block;
             object-fit: cover;
         }
@@ -472,7 +472,7 @@
                 @if($mapImage)
                     <img src="{{ $mapImage }}" alt="Carte" class="map-image">
                 @else
-                    <div style="height: 420px; text-align: center; padding-top: 190px; color: #94a3b8;">
+                    <div style="height: 300px; text-align: center; padding-top: 130px; color: #94a3b8;">
                         Carte non disponible
                     </div>
                 @endif

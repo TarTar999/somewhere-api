@@ -235,7 +235,7 @@ class PdfService
         }
 
         $overlayString = implode(',', $overlays);
-        $zoom = 16;
+        $zoom = 15;
 
         // Calculate bounds if itinerary exists to fit all points
         if ($address->hasItinerary()) {
