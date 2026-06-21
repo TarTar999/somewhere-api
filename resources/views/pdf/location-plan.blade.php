@@ -109,7 +109,7 @@
             color: #16a34a;
         }
 
-        /* Address box - compact to match doc-info-bar height */
+        /* Address box - compact single line */
         .address-box {
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border: 2px solid #4ade80;
@@ -117,15 +117,14 @@
             padding: 6px 15px;
             text-align: center;
             margin-bottom: 10px;
-            display: table;
-            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
         }
         .address-content {
-            display: table-cell;
-            vertical-align: middle;
+            display: inline;
         }
         .sw-address {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #1a1a2e;
             font-family: 'Courier New', monospace;
@@ -133,10 +132,10 @@
             display: inline;
         }
         .address-location {
-            font-size: 10px;
+            font-size: 9px;
             color: #475569;
             display: inline;
-            margin-left: 10px;
+            margin-left: 8px;
         }
         .certified-check {
             display: inline-block;
@@ -225,7 +224,7 @@
         }
         .map-image {
             width: 100%;
-            height: 350px;
+            height: 400px;
             display: block;
             object-fit: cover;
         }
@@ -472,7 +471,7 @@
                 @if($mapImage)
                     <img src="{{ $mapImage }}" alt="Carte" class="map-image">
                 @else
-                    <div style="height: 350px; text-align: center; padding-top: 160px; color: #94a3b8;">
+                    <div style="height: 400px; text-align: center; padding-top: 180px; color: #94a3b8;">
                         Carte non disponible
                     </div>
                 @endif
