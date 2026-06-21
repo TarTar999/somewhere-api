@@ -479,28 +479,9 @@
                 @if($address->latitude && $address->longitude)
                 <div class="coordinates-bar">
                     GPS: {{ number_format($address->latitude, 6) }}, {{ number_format($address->longitude, 6) }}
-                    @if($itinerary)
-                    | Itineraire: {{ $itinerary['distanceFormatted'] ?? 'N/A' }}
-                    @endif
                 </div>
                 @endif
             </div>
-            @if($itinerary)
-            <div class="itinerary-box">
-                <div class="itinerary-title">ITINERAIRE D'ACCES ({{ $itinerary['pointsCount'] }} points)</div>
-                <div class="itinerary-detail">
-                    @if($itinerary['destinationStreet'])
-                    <strong>Depuis:</strong> {{ $itinerary['destinationStreet'] }}
-                    @endif
-                    @if($itinerary['distance'])
-                    | <strong>Distance:</strong> {{ $itinerary['distanceFormatted'] }}
-                    @endif
-                    @if($itinerary['description'])
-                    | {{ $itinerary['description'] }}
-                    @endif
-                </div>
-            </div>
-            @endif
         </div>
 
         <!-- Two Columns: User Info & Location Details -->
