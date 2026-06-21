@@ -150,6 +150,12 @@ Route::get('documents/prices', [DocumentController::class, 'prices']);
 Route::get('documents/download/{token}', [DocumentController::class, 'downloadWithToken'])
     ->name('api.documents.download-token');
 
+// Document download (public - handles auth via token query param or Bearer token)
+// This allows mobile apps to download via: /api/documents/location_plan/123/download?token={access_token}
+Route::get('documents/{type}/{id}/download', [DocumentController::class, 'download'])
+    ->name('api.documents.download')
+    ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
+
 // Web access token validation (public)
 Route::get('web-access/validate/{token}', [WebAccessController::class, 'validateToken']);
 
@@ -229,9 +235,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('documents')->group(function () {
         Route::get('/', [DocumentController::class, 'index']);
         Route::get('address/{addressId}', [DocumentController::class, 'byAddress']);
-        Route::get('{type}/{id}/download', [DocumentController::class, 'download'])
-            ->name('api.documents.download')
-            ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
+        // Download route moved to public routes (handles auth via token query param)
         Route::post('{type}/{id}/download-token', [DocumentController::class, 'generateDownloadToken'])
             ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
     });
