@@ -244,12 +244,18 @@ class DocumentController extends Controller
      */
     public function download(Request $request, string $type, int $id): Response|JsonResponse
     {
+        error_log("📄 ===== DOCUMENT DOWNLOAD =====");
+        error_log("📄 Type requested: {$type}");
+        error_log("📄 ID requested: {$id}");
+
         // Get user from auth or from token query param
         $user = $this->getUserFromRequestOrToken($request);
 
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
+
+        error_log("📄 User authenticated: {$user->id} ({$user->phone})");
 
         switch ($type) {
             case 'location_plan':
@@ -259,13 +265,21 @@ class DocumentController extends Controller
                     ->where('document_type', $type)
                     ->first();
 
+                error_log("📄 Proof found: " . ($proof ? "yes (id={$proof->id}, type={$proof->document_type})" : "no"));
+
                 if (!$proof) {
+                    // Debug: check if document exists with different type
+                    $anyProof = ProofOfLocation::where('id', $id)->first();
+                    if ($anyProof) {
+                        error_log("📄 Document exists but with type={$anyProof->document_type}, user_id={$anyProof->user_id}");
+                    }
                     return $this->error('Document not found', 404);
                 }
 
                 $proof->recordDownload();
 
                 // Generate PDF based on URL type parameter to ensure correct document
+                error_log("📄 Generating PDF: {$type}");
                 if ($type === 'location_plan') {
                     return $this->pdfService->generateLocationPlanPdf($proof);
                 }
@@ -305,19 +319,32 @@ class DocumentController extends Controller
     {
         // First try regular auth
         if (auth()->check()) {
+            error_log("📄 Document download: User authenticated via session/bearer");
             return auth()->user();
         }
 
         // Try token from query parameter
         $token = $request->query('token');
+        error_log("📄 Document download: Token from query = " . ($token ? substr($token, 0, 20) . '...' : 'null'));
+
         if ($token) {
             // Find the token in personal_access_tokens
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-            if ($accessToken && !$accessToken->isExpired()) {
-                return $accessToken->tokenable;
+
+            if ($accessToken) {
+                // Check if token is expired (expires_at is nullable)
+                $isExpired = $accessToken->expires_at && $accessToken->expires_at->isPast();
+                error_log("📄 Document download: Token found, user_id={$accessToken->tokenable_id}, expired=" . ($isExpired ? 'yes' : 'no'));
+
+                if (!$isExpired) {
+                    return $accessToken->tokenable;
+                }
+            } else {
+                error_log("📄 Document download: Token not found in database");
             }
         }
 
+        error_log("📄 Document download: Authentication failed");
         return null;
     }
 
