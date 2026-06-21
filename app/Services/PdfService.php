@@ -95,8 +95,9 @@ class PdfService
         // Prepare itinerary data for template
         $itineraryData = null;
         if ($address->hasItinerary()) {
+            $itinerary = $address->itinerary;
             $itineraryData = [
-                'pointsCount' => count($address->itinerary),
+                'pointsCount' => count($itinerary),
                 'distance' => $address->itinerary_distance,
                 'distanceFormatted' => $address->itinerary_distance
                     ? ($address->itinerary_distance >= 1000
@@ -218,15 +219,18 @@ class PdfService
         $overlays[] = "pin-l+ff0000({$lon},{$lat})";
 
         // Add itinerary start marker if different from address
-        if ($address->hasItinerary() && count($address->itinerary) > 0) {
-            $startPoint = $address->itinerary[0];
-            // Only add start marker if it's not too close to the address
-            $distance = $this->calculateDistance(
-                $lat, $lon,
-                $startPoint['lat'], $startPoint['lng']
-            );
-            if ($distance > 20) { // More than 20 meters away
-                $overlays[] = "pin-s+4ade80({$startPoint['lng']},{$startPoint['lat']})";
+        if ($address->hasItinerary()) {
+            $itinerary = $address->itinerary;
+            if (count($itinerary) > 0) {
+                $startPoint = $itinerary[0];
+                // Only add start marker if it's not too close to the address
+                $distance = $this->calculateDistance(
+                    $lat, $lon,
+                    $startPoint['lat'], $startPoint['lng']
+                );
+                if ($distance > 20) { // More than 20 meters away
+                    $overlays[] = "pin-s+4ade80({$startPoint['lng']},{$startPoint['lat']})";
+                }
             }
         }
 
@@ -274,14 +278,17 @@ class PdfService
         $addressLat = (float) $address->latitude;
         $addressLng = (float) $address->longitude;
 
+        // Store itinerary in local variable (PHP 8.4 doesn't allow indirect modification of casted properties)
+        $itinerary = $address->itinerary;
+
         // Build coordinate pairs for the path
         $coordinates = [];
-        foreach ($address->itinerary as $point) {
+        foreach ($itinerary as $point) {
             $coordinates[] = round($point['lng'], 6) . ',' . round($point['lat'], 6);
         }
 
         // Always add the address point at the end to complete the path
-        $lastPoint = end($address->itinerary);
+        $lastPoint = end($itinerary);
         $distanceToEnd = $this->calculateDistance(
             $lastPoint['lat'], $lastPoint['lng'],
             $addressLat, $addressLng
@@ -317,7 +324,8 @@ class PdfService
 
         // Add itinerary points
         if ($address->hasItinerary()) {
-            foreach ($address->itinerary as $point) {
+            $itinerary = $address->itinerary;
+            foreach ($itinerary as $point) {
                 $points[] = ['lat' => (float) $point['lat'], 'lng' => (float) $point['lng']];
             }
         }
