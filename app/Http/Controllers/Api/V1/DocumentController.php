@@ -240,16 +240,23 @@ class DocumentController extends Controller
     /**
      * Download document as PDF
      * Route: GET /api/documents/{type}/{id}/download
+     * Supports token via query param: ?token={access_token}
      */
-    public function download(string $type, int $id): Response|JsonResponse
+    public function download(Request $request, string $type, int $id): Response|JsonResponse
     {
-        $user = auth()->user();
+        // Get user from auth or from token query param
+        $user = $this->getUserFromRequestOrToken($request);
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
 
         switch ($type) {
             case 'location_plan':
             case 'proof_of_residence':
                 $proof = ProofOfLocation::where('id', $id)
                     ->where('user_id', $user->id)
+                    ->where('document_type', $type)
                     ->first();
 
                 if (!$proof) {
@@ -257,7 +264,12 @@ class DocumentController extends Controller
                 }
 
                 $proof->recordDownload();
-                return $this->pdfService->generateProofPdf($proof);
+
+                // Generate PDF based on URL type parameter to ensure correct document
+                if ($type === 'location_plan') {
+                    return $this->pdfService->generateLocationPlanPdf($proof);
+                }
+                return $this->pdfService->generateProofOfResidencePdf($proof);
 
             case 'invoice':
                 $invoice = Invoice::where('id', $id)
@@ -284,6 +296,29 @@ class DocumentController extends Controller
             default:
                 return $this->error('Invalid document type', 400);
         }
+    }
+
+    /**
+     * Get user from auth or from token query parameter
+     */
+    protected function getUserFromRequestOrToken(Request $request)
+    {
+        // First try regular auth
+        if (auth()->check()) {
+            return auth()->user();
+        }
+
+        // Try token from query parameter
+        $token = $request->query('token');
+        if ($token) {
+            // Find the token in personal_access_tokens
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($accessToken && !$accessToken->isExpired()) {
+                return $accessToken->tokenable;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -424,9 +459,12 @@ class DocumentController extends Controller
         // Generate and return PDF
         switch ($type) {
             case 'location_plan':
+                $document->recordDownload();
+                return $this->pdfService->generateLocationPlanPdf($document);
+
             case 'proof_of_residence':
                 $document->recordDownload();
-                return $this->pdfService->generateProofPdf($document);
+                return $this->pdfService->generateProofOfResidencePdf($document);
 
             case 'invoice':
                 return $this->pdfService->generateInvoicePdf($document);
@@ -449,6 +487,7 @@ class DocumentController extends Controller
             case 'proof_of_residence':
                 return ProofOfLocation::where('id', $id)
                     ->where('user_id', $userId)
+                    ->where('document_type', $type)
                     ->first();
 
             case 'invoice':
