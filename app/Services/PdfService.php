@@ -237,22 +237,8 @@ class PdfService
         $overlayString = implode(',', $overlays);
         $zoom = 14;
 
-        // Calculate bounds if itinerary exists to fit all points
-        if ($address->hasItinerary()) {
-            $bounds = $this->calculateBounds($address);
-            if ($bounds) {
-                // Use auto zoom with bounding box
-                return sprintf(
-                    'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/%s/[%s,%s,%s,%s]/650x450@2x?access_token=%s&padding=50',
-                    $overlayString,
-                    $bounds['minLng'],
-                    $bounds['minLat'],
-                    $bounds['maxLng'],
-                    $bounds['maxLat'],
-                    $this->mapboxToken
-                );
-            }
-        }
+        // Always use fixed zoom for consistent map display
+        // (bounds auto-zoom often zooms in too much for short itineraries)
 
         return sprintf(
             'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/%s/%s,%s,%s/650x450@2x?access_token=%s',
