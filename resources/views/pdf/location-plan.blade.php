@@ -139,9 +139,9 @@
         }
         .certified-check {
             display: inline-block;
-            margin-left: 8px;
-            width: 20px;
-            height: 20px;
+            margin-left: 6px;
+            width: 14px;
+            height: 14px;
             background: #22c55e;
             border-radius: 50%;
             text-align: center;
@@ -151,10 +151,10 @@
         .certified-check::after {
             content: '';
             position: absolute;
-            left: 7px;
-            top: 4px;
-            width: 5px;
-            height: 9px;
+            left: 5px;
+            top: 2px;
+            width: 3px;
+            height: 7px;
             border: solid #fff;
             border-width: 0 2px 2px 0;
             transform: rotate(45deg);
