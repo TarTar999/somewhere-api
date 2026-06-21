@@ -165,7 +165,7 @@
         .two-columns {
             display: table;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         .column {
             display: table-cell;
@@ -180,7 +180,7 @@
 
         /* Section */
         .section {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         .section-title {
             font-size: 10px;
@@ -225,7 +225,7 @@
         }
         .map-image {
             width: 100%;
-            height: 300px;
+            height: 350px;
             display: block;
             object-fit: cover;
         }
@@ -472,7 +472,7 @@
                 @if($mapImage)
                     <img src="{{ $mapImage }}" alt="Carte" class="map-image">
                 @else
-                    <div style="height: 300px; text-align: center; padding-top: 130px; color: #94a3b8;">
+                    <div style="height: 350px; text-align: center; padding-top: 160px; color: #94a3b8;">
                         Carte non disponible
                     </div>
                 @endif
