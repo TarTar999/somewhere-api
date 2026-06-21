@@ -146,6 +146,10 @@ Route::get('documents/verify/{code}', [DocumentController::class, 'verify'])
 // Document prices (public)
 Route::get('documents/prices', [DocumentController::class, 'prices']);
 
+// Document download with token (public - no auth required)
+Route::get('documents/download/{token}', [DocumentController::class, 'downloadWithToken'])
+    ->name('api.documents.download-token');
+
 // Web access token validation (public)
 Route::get('web-access/validate/{token}', [WebAccessController::class, 'validateToken']);
 
@@ -227,6 +231,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('address/{addressId}', [DocumentController::class, 'byAddress']);
         Route::get('{type}/{id}/download', [DocumentController::class, 'download'])
             ->name('api.documents.download')
+            ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
+        Route::post('{type}/{id}/download-token', [DocumentController::class, 'generateDownloadToken'])
             ->where('type', 'location_plan|proof_of_residence|invoice|receipt');
     });
 

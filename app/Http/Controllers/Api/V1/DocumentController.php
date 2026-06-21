@@ -10,7 +10,9 @@ use App\Services\PdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
@@ -358,5 +360,109 @@ class DocumentController extends Controller
             'downloadUrl' => "/api/documents/receipt/{$receipt->id}/download",
             'createdAt' => $receipt->created_at->toIso8601String(),
         ];
+    }
+
+    /**
+     * Generate a temporary download token for a document
+     * This allows downloading without auth header (e.g., opening in browser)
+     * Route: POST /api/documents/{type}/{id}/download-token
+     */
+    public function generateDownloadToken(string $type, int $id): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Verify document ownership
+        $document = $this->findDocument($type, $id, $user->id);
+        if (!$document) {
+            return $this->error('Document not found', 404);
+        }
+
+        // Generate token (valid for 5 minutes)
+        $token = Str::random(64);
+        $cacheKey = "download_token:{$token}";
+
+        Cache::put($cacheKey, [
+            'type' => $type,
+            'id' => $id,
+            'user_id' => $user->id,
+        ], now()->addMinutes(5));
+
+        $downloadUrl = config('app.url') . "/api/documents/download/{$token}";
+
+        return $this->success([
+            'downloadUrl' => $downloadUrl,
+            'expiresIn' => 300, // 5 minutes in seconds
+            'expiresAt' => now()->addMinutes(5)->toIso8601String(),
+        ], 'Download token generated');
+    }
+
+    /**
+     * Download document using temporary token (public endpoint)
+     * Route: GET /api/documents/download/{token}
+     */
+    public function downloadWithToken(string $token): Response|JsonResponse
+    {
+        $cacheKey = "download_token:{$token}";
+        $data = Cache::get($cacheKey);
+
+        if (!$data) {
+            return response()->json(['message' => 'Invalid or expired download link'], 404);
+        }
+
+        // Delete token after use (one-time use)
+        Cache::forget($cacheKey);
+
+        $type = $data['type'];
+        $id = $data['id'];
+        $userId = $data['user_id'];
+
+        $document = $this->findDocument($type, $id, $userId);
+        if (!$document) {
+            return response()->json(['message' => 'Document not found'], 404);
+        }
+
+        // Generate and return PDF
+        switch ($type) {
+            case 'location_plan':
+            case 'proof_of_residence':
+                $document->recordDownload();
+                return $this->pdfService->generateProofPdf($document);
+
+            case 'invoice':
+                return $this->pdfService->generateInvoicePdf($document);
+
+            case 'receipt':
+                return $this->pdfService->generateReceiptPdf($document);
+
+            default:
+                return response()->json(['message' => 'Invalid document type'], 400);
+        }
+    }
+
+    /**
+     * Find document by type and ID
+     */
+    protected function findDocument(string $type, int $id, int $userId)
+    {
+        switch ($type) {
+            case 'location_plan':
+            case 'proof_of_residence':
+                return ProofOfLocation::where('id', $id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+            case 'invoice':
+                return Invoice::where('id', $id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+            case 'receipt':
+                return Receipt::where('id', $id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+            default:
+                return null;
+        }
     }
 }
