@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\ProofOfLocation;
+use App\Services\PdfService;
 use App\Services\ProofOfLocationService;
 use App\Services\QrCodeService;
 use App\Services\WebAccessService;
@@ -13,6 +14,7 @@ class ProofOfLocationController extends Controller
 {
     public function __construct(
         protected ProofOfLocationService $proofService,
+        protected PdfService $pdfService,
         protected QrCodeService $qrCodeService,
         protected WebAccessService $webAccessService
     ) {}
@@ -79,7 +81,14 @@ class ProofOfLocationController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        return $this->proofService->download($proof);
+        $proof->recordDownload();
+
+        // Use PdfService with correct templates based on document type
+        if ($proof->isLocationPlan()) {
+            return $this->pdfService->generateLocationPlanPdf($proof);
+        }
+
+        return $this->pdfService->generateProofOfResidencePdf($proof);
     }
 
     /**
