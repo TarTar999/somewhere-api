@@ -114,9 +114,9 @@
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border: 2px solid #4ade80;
             border-radius: 6px;
-            padding: 6px 15px;
+            padding: 5px 8px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             white-space: nowrap;
             overflow: hidden;
         }
@@ -124,18 +124,18 @@
             display: inline;
         }
         .sw-address {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #1a1a2e;
             font-family: 'Courier New', monospace;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             display: inline;
         }
         .address-location {
-            font-size: 9px;
+            font-size: 8px;
             color: #475569;
             display: inline;
-            margin-left: 8px;
+            margin-left: 6px;
         }
         .certified-check {
             display: inline-block;
