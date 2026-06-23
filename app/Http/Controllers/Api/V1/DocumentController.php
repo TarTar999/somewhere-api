@@ -313,38 +313,54 @@ class DocumentController extends Controller
     }
 
     /**
-     * Get user from auth or from token query parameter
+     * Get user from auth or from token (header or query parameter)
+     * Priority: 1. Session/Sanctum auth  2. Bearer token header  3. Query param token
      */
     protected function getUserFromRequestOrToken(Request $request)
     {
-        // First try regular auth
+        // First try regular auth (session-based for web)
         if (auth()->check()) {
-            error_log("📄 Document download: User authenticated via session/bearer");
+            error_log("📄 Document download: User authenticated via session");
             return auth()->user();
         }
 
-        // Try token from query parameter
-        $token = $request->query('token');
-        error_log("📄 Document download: Token from query = " . ($token ? substr($token, 0, 20) . '...' : 'null'));
-
-        if ($token) {
-            // Find the token in personal_access_tokens
-            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        // Try Bearer token from Authorization header
+        $bearerToken = $request->bearerToken();
+        if ($bearerToken) {
+            error_log("📄 Document download: Bearer token found in header");
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($bearerToken);
 
             if ($accessToken) {
-                // Check if token is expired (expires_at is nullable)
                 $isExpired = $accessToken->expires_at && $accessToken->expires_at->isPast();
-                error_log("📄 Document download: Token found, user_id={$accessToken->tokenable_id}, expired=" . ($isExpired ? 'yes' : 'no'));
+                error_log("📄 Document download: Bearer token valid, user_id={$accessToken->tokenable_id}, expired=" . ($isExpired ? 'yes' : 'no'));
 
                 if (!$isExpired) {
                     return $accessToken->tokenable;
                 }
             } else {
-                error_log("📄 Document download: Token not found in database");
+                error_log("📄 Document download: Bearer token not found in database");
             }
         }
 
-        error_log("📄 Document download: Authentication failed");
+        // Try token from query parameter
+        $queryToken = $request->query('token');
+        if ($queryToken) {
+            error_log("📄 Document download: Token from query = " . substr($queryToken, 0, 20) . '...');
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($queryToken);
+
+            if ($accessToken) {
+                $isExpired = $accessToken->expires_at && $accessToken->expires_at->isPast();
+                error_log("📄 Document download: Query token valid, user_id={$accessToken->tokenable_id}, expired=" . ($isExpired ? 'yes' : 'no'));
+
+                if (!$isExpired) {
+                    return $accessToken->tokenable;
+                }
+            } else {
+                error_log("📄 Document download: Query token not found in database");
+            }
+        }
+
+        error_log("📄 Document download: Authentication failed - no valid token found");
         return null;
     }
 
