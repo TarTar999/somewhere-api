@@ -28,3 +28,7 @@ Schedule::command('notifications:expiring-documents --days=7')->dailyAt('09:00')
 
 // Send reminder for documents expiring in 3 days at 9 AM
 Schedule::command('notifications:expiring-documents --days=3')->dailyAt('09:00');
+
+// Sync ENEO power outage programmes daily at 6 AM and 6 PM
+Schedule::command('eneo:sync-outages')->dailyAt('06:00');
+Schedule::command('eneo:sync-outages')->dailyAt('18:00');

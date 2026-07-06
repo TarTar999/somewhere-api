@@ -23,20 +23,31 @@ class PaymentController extends Controller
 
     /**
      * Get payment configuration
+     * Note: V1 - Location plans are free for individual users
+     * proof_of_residence is hidden for now
      */
     public function getConfig(): JsonResponse
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+
+        // Check if user belongs to a company (companies still pay)
+        $isCompanyUser = $user && $user->companies()->exists();
+
         return $this->success([
+            // V1: Only show location_plan, it's free for individuals
             'prices' => [
-                'location_plan' => (int) config('documents.prices.location_plan', 2000),
-                'proof_of_residence' => (int) config('documents.prices.proof_of_residence', 3000),
+                'location_plan' => $isCompanyUser ? (int) config('documents.prices.location_plan', 2000) : 0,
             ],
-            'proofOfLocationPrice' => (int) config('documents.prices.location_plan', 2000), // Backward compatibility
+            'proofOfLocationPrice' => $isCompanyUser ? (int) config('documents.prices.location_plan', 2000) : 0,
             'currency' => 'XAF',
             'paymentMethods' => ['mobile_money', 'orange_money'],
             'isSandbox' => str_starts_with(config('services.fapshi.api_key', ''), 'FAK_TEST_'),
             'validityMonths' => (int) config('documents.validity_months', 3),
-        ], 'Payment configuration');
+            // V1: Location plan is free for individuals
+            'isFreeForIndividuals' => true,
+            'availableDocuments' => ['location_plan'], // Only location_plan available in V1
+        ], 'Configuration');
     }
 
     /**

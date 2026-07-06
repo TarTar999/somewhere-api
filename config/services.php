@@ -54,4 +54,18 @@ return [
         'custom_style_url' => env('MAPBOX_CUSTOM_STYLE_URL', ''),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_id_ios' => env('GOOGLE_CLIENT_ID_IOS'),
+        'client_id_android' => env('GOOGLE_CLIENT_ID_ANDROID'),
+    ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'bundle_id' => env('APPLE_BUNDLE_ID'),
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key_path' => env('APPLE_PRIVATE_KEY_PATH', storage_path('app/apple-auth-key.p8')),
+    ],
+
 ];

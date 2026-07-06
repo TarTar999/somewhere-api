@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Address;
 use App\Models\ProofOfLocation;
 use App\Services\PdfService;
 use App\Services\ProofOfLocationService;
@@ -9,6 +10,7 @@ use App\Services\QrCodeService;
 use App\Services\WebAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProofOfLocationController extends Controller
 {
@@ -155,5 +157,45 @@ class ProofOfLocationController extends Controller
             'expiresAt' => $proof->expires_at->toIso8601String(),
             'verificationUrl' => route('web.proof.verify', ['token' => $token]),
         ], 'Proof of location verified');
+    }
+
+    /**
+     * Generate free location plan for individual users (V1)
+     * No payment required - location plans are free for this version
+     */
+    public function generate(Request $request): JsonResponse
+    {
+        $addressId = $request->input('addressId') ?? $request->input('address_id');
+
+        $validator = Validator::make([
+            'addressId' => $addressId,
+        ], [
+            'addressId' => 'required|exists:addresses,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validation failed', 422, $validator->errors());
+        }
+
+        /** @var Address $address */
+        $address = Address::find($addressId);
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        // Verify ownership
+        if ($address->user_id !== $user->id) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        try {
+            $proof = $this->proofService->generateFreeLocationPlan($user, $address);
+
+            return $this->success([
+                'document' => $this->proofService->formatProofForResponse($proof),
+                'message' => 'Votre plan de localisation a été généré avec succès',
+            ], 'Location plan generated');
+        } catch (\Exception $e) {
+            return $this->error('Failed to generate location plan: ' . $e->getMessage(), 500);
+        }
     }
 }

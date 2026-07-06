@@ -8,9 +8,11 @@ use App\Http\Requests\Api\Address\StoreAddressRequest;
 use App\Http\Requests\Api\Address\UpdateAddressRequest;
 use App\Models\Address;
 use App\Models\Domiciliation;
+use App\Models\LieuDit;
 use App\Models\Street;
 use App\Services\FileUploadService;
 use App\Services\NominatimService;
+use App\Services\OutageMatchingService;
 use App\Services\QrCodeService;
 use App\Services\StreetService;
 use App\Services\SwAddressService;
@@ -26,17 +28,26 @@ class AddressController extends Controller
         protected QrCodeService $qrCodeService,
         protected FileUploadService $fileUploadService,
         protected NominatimService $nominatimService,
-        protected StreetService $streetService
+        protected StreetService $streetService,
+        protected OutageMatchingService $outageService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $addresses = auth()->user()->addresses()
             ->with(['street', 'itineraryStreet', 'itineraryIntersection'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $this->success($this->formatAddresses($addresses));
+        $formatted = $this->formatAddresses($addresses);
+
+        // Enrichir avec les informations de coupures d'électricité
+        $includeOutages = $request->boolean('include_outages', true);
+        if ($includeOutages) {
+            $formatted = $this->outageService->enrichAddressesWithOutages($formatted, $addresses);
+        }
+
+        return $this->success($formatted);
     }
 
     public function store(StoreAddressRequest $request): JsonResponse
@@ -170,6 +181,15 @@ class AddressController extends Controller
                 'status' => 'approved',
                 'is_primary' => $isPrimary,
             ]);
+
+            // Register lieu-dit if provided (add to database if new, increment usage if exists)
+            if (!empty($request->lieuDit)) {
+                $lieuDit = LieuDit::findOrCreateByName(
+                    $request->lieuDit,
+                    $request->quarter // Use quarter as city context
+                );
+                $lieuDit->incrementUsage();
+            }
         });
 
         // Load relations for response
@@ -195,7 +215,10 @@ class AddressController extends Controller
 
         $address->load(['street', 'itineraryStreet', 'itineraryIntersection']);
 
-        return $this->success($this->formatAddress($address));
+        $formatted = $this->formatAddress($address);
+        $formatted = $this->outageService->enrichAddressWithOutages($formatted, $address);
+
+        return $this->success($formatted);
     }
 
     public function showBySwAddress(string $swAddress): JsonResponse
@@ -208,7 +231,10 @@ class AddressController extends Controller
             return $this->error('Address not found', 404);
         }
 
-        return $this->success($this->formatAddress($address));
+        $formatted = $this->formatAddress($address);
+        $formatted = $this->outageService->enrichAddressWithOutages($formatted, $address);
+
+        return $this->success($formatted);
     }
 
     public function update(UpdateAddressRequest $request, Address $address): JsonResponse
@@ -655,6 +681,7 @@ class AddressController extends Controller
         $data = [
             'id' => $address->id,
             'swAddress' => $address->sw_address,
+            'referenceCode' => $address->reference_code,
             'displayName' => $address->display_name,
             'latLon' => $address->lat_lon,
             'coordinates' => $address->coordinates,

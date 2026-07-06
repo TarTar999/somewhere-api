@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\OtpController;
 use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Auth\ProfileController;
+use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\CollectionAddressController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\CompanyAddressController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Api\V1\DomiciliationController;
 use App\Http\Controllers\Api\V1\IntersectionController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\KycController;
+use App\Http\Controllers\Api\V1\LieuDitController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProofOfLocationController;
@@ -65,6 +67,10 @@ Route::prefix('auth')->group(function () {
     Route::post('forgot-password/send-link', [ForgotPasswordController::class, 'sendResetLink']);
     Route::post('forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
     Route::post('forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
+
+    // Social authentication (Google, Apple)
+    Route::post('social/{provider}', [SocialAuthController::class, 'authenticate'])
+        ->where('provider', 'google|apple');
 });
 
 // Proof of residence download (can be accessed with token in URL)
@@ -172,6 +178,14 @@ Route::prefix('streets')->group(function () {
     Route::post('{streetId}/calculate-address', [StreetController::class, 'calculateAddress']);
 });
 
+// Lieux-dits (public - used for address creation autocomplete)
+Route::prefix('lieux-dits')->group(function () {
+    Route::get('search', [LieuDitController::class, 'search']);
+    Route::get('popular', [LieuDitController::class, 'popular']);
+    Route::get('cities', [LieuDitController::class, 'cities']);
+    Route::get('/', [LieuDitController::class, 'index']);
+});
+
 // Map data (public for heatmap visualization)
 Route::prefix('map')->group(function () {
     Route::get('heatmap', [\App\Http\Controllers\Api\V1\MapController::class, 'heatmap']);
@@ -207,6 +221,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'store']);
         Route::put('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'update']);
         Route::delete('pin-code', [\App\Http\Controllers\Api\V1\Auth\PinCodeController::class, 'destroy']);
+
+        // Social account linking (Google, Apple)
+        Route::post('social/{provider}/link', [SocialAuthController::class, 'link'])
+            ->where('provider', 'google|apple');
+        Route::delete('social/{provider}/unlink', [SocialAuthController::class, 'unlink'])
+            ->where('provider', 'google|apple');
     });
 
     // Account management
@@ -254,6 +274,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('proof-of-location')->group(function () {
         Route::get('/', [ProofOfLocationController::class, 'index']);
         Route::get('active', [ProofOfLocationController::class, 'getActive']);
+        Route::post('generate', [ProofOfLocationController::class, 'generate']); // Free generation (V1)
         Route::get('{id}', [ProofOfLocationController::class, 'show']);
         Route::get('{id}/download', [ProofOfLocationController::class, 'download'])
             ->name('api.proof-of-location.download');

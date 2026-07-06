@@ -215,25 +215,23 @@ class DocumentController extends Controller
 
     /**
      * Get document prices
+     * V1: Location plan is free for individual users, proof_of_residence is hidden
      */
     public function prices(): JsonResponse
     {
         return $this->success([
             'prices' => [
                 'location_plan' => [
-                    'amount' => config('documents.prices.location_plan', 2000),
+                    'amount' => 0, // Free for V1
                     'currency' => 'XAF',
                     'label' => 'Plan de Localisation',
-                    'description' => 'Document officiel indiquant la localisation precise de votre adresse',
-                ],
-                'proof_of_residence' => [
-                    'amount' => config('documents.prices.proof_of_residence', 3000),
-                    'currency' => 'XAF',
-                    'label' => 'Attestation de Residence',
-                    'description' => 'Document officiel attestant de votre residence a cette adresse',
+                    'description' => 'Document officiel indiquant la localisation précise de votre adresse',
+                    'isFree' => true,
                 ],
             ],
             'validityMonths' => config('documents.validity_months', 3),
+            'availableDocuments' => ['location_plan'],
+            'message' => 'Le plan de localisation est disponible gratuitement',
         ]);
     }
 

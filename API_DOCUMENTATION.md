@@ -359,6 +359,250 @@ Demander une réinitialisation de mot de passe.
 
 ---
 
+## Authentification sociale (Google / Apple)
+
+Permet aux utilisateurs de se connecter ou créer un compte via Google ou Apple Sign-In.
+
+### POST /api/auth/social/{provider}
+
+Authentification via un provider social (login ou inscription automatique).
+
+**Providers supportés:** `google`, `apple`
+
+**Body:**
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp...",
+  "device_name": "iPhone 14 Pro",
+  "device_id": "unique-device-id",
+  "user": {
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+}
+```
+
+| Champ | Type | Requis | Description |
+|-------|------|--------|-------------|
+| id_token | string | Oui | Token d'identité retourné par Google/Apple |
+| device_name | string | Non | Nom de l'appareil |
+| device_id | string | Non | Identifiant unique de l'appareil |
+| user | object | Non | Données utilisateur (Apple uniquement, première connexion) |
+
+> **Note Apple:** Les données `user.firstName` et `user.lastName` ne sont envoyées que lors de la première autorisation Apple. Stockez-les localement car elles ne seront plus disponibles ensuite.
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Authentication successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "john@example.com",
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    "access_token": "1|abc123...",
+    "refresh_token": "xyz789...",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "authMethods": ["social_google", "phone"],
+    "needsPinSetup": true,
+    "socialAuth": {
+      "provider": "google",
+      "linkedGoogle": true,
+      "linkedApple": false
+    }
+  }
+}
+```
+
+**Erreurs:**
+- `400` - Provider invalide
+- `401` - Token invalide ou expiré
+- `500` - Erreur d'authentification
+
+---
+
+### POST /api/auth/social/{provider}/link
+
+Lier un compte social à un utilisateur authentifié.
+
+**Headers:** `Authorization: Bearer {access_token}`
+
+**Body:**
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp...",
+  "user": {
+    "firstName": "John",
+    "lastName": "Doe"
+  }
+}
+```
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Account linked successfully",
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "john@example.com",
+      "linkedGoogle": true,
+      "linkedApple": false
+    }
+  }
+}
+```
+
+**Erreurs:**
+- `400` - Compte déjà lié à ce provider
+- `409` - Ce compte social est déjà associé à un autre utilisateur
+
+---
+
+### DELETE /api/auth/social/{provider}/unlink
+
+Délier un compte social de l'utilisateur authentifié.
+
+**Headers:** `Authorization: Bearer {access_token}`
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Account unlinked successfully",
+  "data": {
+    "user": {
+      "id": 1,
+      "linkedGoogle": false,
+      "linkedApple": true
+    }
+  }
+}
+```
+
+**Erreurs:**
+- `400` - Compte non lié à ce provider
+- `400` - Impossible de délier (aucune autre méthode d'authentification disponible)
+
+---
+
+## Lieux-dits
+
+API pour la recherche et l'autocomplétion des lieux-dits camerounais. Utilisée principalement lors de la création d'adresses.
+
+### GET /api/lieux-dits/search
+
+Recherche autocomplete de lieux-dits. **Route publique.**
+
+**Query params:**
+| Param | Type | Requis | Description |
+|-------|------|--------|-------------|
+| q | string | Oui | Terme de recherche (min 2 caractères) |
+| city | string | Non | Filtrer par ville |
+| limit | number | Non | Nombre de résultats (défaut: 20, max: 50) |
+
+**Exemple:** `GET /api/lieux-dits/search?q=bona&city=Douala&limit=15`
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Success",
+  "data": {
+    "query": "bona",
+    "results": [
+      {
+        "id": 1,
+        "name": "Bonamoussadi",
+        "city": "Douala",
+        "region": "Littoral",
+        "isVerified": true,
+        "usageCount": 245
+      },
+      {
+        "id": 2,
+        "name": "Bonaberi",
+        "city": "Douala",
+        "region": "Littoral",
+        "isVerified": true,
+        "usageCount": 189
+      }
+    ],
+    "count": 2
+  }
+}
+```
+
+---
+
+### GET /api/lieux-dits/popular
+
+Récupérer les lieux-dits les plus utilisés. **Route publique.**
+
+**Query params:**
+| Param | Type | Requis | Description |
+|-------|------|--------|-------------|
+| city | string | Non | Filtrer par ville |
+| limit | number | Non | Nombre de résultats (défaut: 20) |
+
+**Exemple:** `GET /api/lieux-dits/popular?city=Douala&limit=10`
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Success",
+  "data": {
+    "results": [
+      {
+        "id": 1,
+        "name": "Bonamoussadi",
+        "city": "Douala",
+        "region": "Littoral",
+        "isVerified": true,
+        "usageCount": 245
+      }
+    ],
+    "count": 10
+  }
+}
+```
+
+---
+
+### GET /api/lieux-dits/cities
+
+Liste des villes disponibles. **Route publique.**
+
+**Réponse:** `200 OK`
+```json
+{
+  "message": "Success",
+  "data": {
+    "cities": ["Douala", "Yaoundé", "Bafoussam", "Garoua", "Bamenda"],
+    "count": 5
+  }
+}
+```
+
+---
+
+### GET /api/lieux-dits
+
+Liste paginée de tous les lieux-dits. **Route publique.**
+
+**Query params:**
+| Param | Type | Requis | Description |
+|-------|------|--------|-------------|
+| city | string | Non | Filtrer par ville |
+| perPage | number | Non | Éléments par page (défaut: 50) |
+
+**Exemple:** `GET /api/lieux-dits?city=Yaoundé&perPage=25`
+
+**Réponse:** `200 OK` - Liste paginée
+
+---
+
 ## Adresses
 
 ### Format d'une adresse

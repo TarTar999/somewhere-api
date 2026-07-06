@@ -86,6 +86,51 @@ class ProofOfLocationService
     }
 
     /**
+     * Generate free location plan for individual users (V1 - no payment required)
+     * Note: Companies will still need to pay
+     */
+    public function generateFreeLocationPlan(User $user, Address $address): ProofOfLocation
+    {
+        // Check if user owns the address
+        if ($address->user_id !== $user->id) {
+            throw new \InvalidArgumentException('User does not own this address');
+        }
+
+        // Check if user already has an active location plan for this address
+        $existingProof = $user->proofOfLocations()
+            ->where('address_id', $address->id)
+            ->where('document_type', ProofOfLocation::TYPE_LOCATION_PLAN)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($existingProof) {
+            return $existingProof;
+        }
+
+        // Create document record (free - no payment)
+        $proof = ProofOfLocation::create([
+            'user_id' => $user->id,
+            'address_id' => $address->id,
+            'payment_id' => null, // No payment for free version
+            'document_type' => ProofOfLocation::TYPE_LOCATION_PLAN,
+            'document_number' => ProofOfLocation::generateDocumentNumber($user, $address, ProofOfLocation::TYPE_LOCATION_PLAN),
+            'verification_code' => ProofOfLocation::generateVerificationCode(),
+            'price' => 0, // Free
+            'file_path' => '', // Will be set after PDF generation
+            'status' => 'active',
+            'issued_at' => now(),
+            'expires_at' => now()->addMonths($this->getValidityMonths()),
+        ]);
+
+        // Generate PDF
+        $filePath = $this->generatePdf($proof);
+        $proof->update(['file_path' => $filePath]);
+
+        return $proof->fresh();
+    }
+
+    /**
      * Generate PDF document
      */
     public function generatePdf(ProofOfLocation $proof): string

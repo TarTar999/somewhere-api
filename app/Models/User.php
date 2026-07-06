@@ -41,6 +41,8 @@ class User extends Authenticatable
         'deletion_scheduled_at',
         'deletion_reason',
         'current_company_id',
+        'google_id',
+        'apple_id',
     ];
 
     protected $hidden = [
@@ -362,5 +364,38 @@ class User extends Authenticatable
     public function isPasswordless(): bool
     {
         return empty($this->password);
+    }
+
+    // Social Authentication Methods
+
+    /**
+     * Check if user has linked their Google account
+     */
+    public function linkedToGoogle(): bool
+    {
+        return !empty($this->google_id);
+    }
+
+    /**
+     * Check if user has linked their Apple account
+     */
+    public function linkedToApple(): bool
+    {
+        return !empty($this->apple_id);
+    }
+
+    /**
+     * Get all linked social providers
+     */
+    public function getLinkedSocialProviders(): array
+    {
+        $providers = [];
+        if ($this->linkedToGoogle()) {
+            $providers[] = 'google';
+        }
+        if ($this->linkedToApple()) {
+            $providers[] = 'apple';
+        }
+        return $providers;
     }
 }

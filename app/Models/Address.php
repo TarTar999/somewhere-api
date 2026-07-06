@@ -19,6 +19,7 @@ class Address extends Model
         'distance_on_street',
         'street_side',
         'sw_address',
+        'reference_code',
         'display_name',
         'latitude',
         'longitude',
@@ -300,5 +301,32 @@ class Address extends Model
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
+    }
+
+    /**
+     * Generate a unique reference code for this address
+     * Format: SW-XXXXXX (6 alphanumeric characters)
+     */
+    public static function generateReferenceCode(): string
+    {
+        do {
+            $code = 'SW-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+        } while (self::where('reference_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Boot method to auto-generate reference code
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($address) {
+            if (empty($address->reference_code)) {
+                $address->reference_code = self::generateReferenceCode();
+            }
+        });
     }
 }
