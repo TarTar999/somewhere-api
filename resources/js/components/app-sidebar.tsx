@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, MapPin, FileText, FolderOpen, Truck, Building2, Settings, HelpCircle } from 'lucide-react';
+import { LayoutGrid, FolderOpen, Truck, Building2, Settings } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -21,16 +21,6 @@ const mainNavItems: NavItem[] = [
         title: 'Tableau de bord',
         href: dashboard(),
         icon: LayoutGrid,
-    },
-    {
-        title: 'Mes Adresses',
-        href: '/dashboard#addresses',
-        icon: MapPin,
-    },
-    {
-        title: 'Mes Documents',
-        href: '/dashboard#documents',
-        icon: FileText,
     },
     {
         title: 'Collections',
@@ -57,11 +47,6 @@ const footerNavItems: NavItem[] = [
         title: 'Paramètres',
         href: '/settings',
         icon: Settings,
-    },
-    {
-        title: 'Aide',
-        href: '/help',
-        icon: HelpCircle,
     },
 ];
 

@@ -244,10 +244,11 @@ export default function Dashboard({ addresses, documents, collections, stats, ha
                         )}
 
                         {/* Quick Actions */}
-                        <Button asChild className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-500/30 border-0 rounded-xl h-12 w-12">
-                            <Link href="/addresses/create">
-                                <Plus className="h-5 w-5" />
-                            </Link>
+                        <Button
+                            onClick={() => setViewMode('list')}
+                            className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-500/30 border-0 rounded-xl h-12 w-12"
+                        >
+                            <Plus className="h-5 w-5" />
                         </Button>
                     </div>
                 }
@@ -263,9 +264,9 @@ export default function Dashboard({ addresses, documents, collections, stats, ha
                                     <p className="text-gray-500">{addresses.length} adresse(s) enregistrée(s)</p>
                                 </div>
                                 <Button asChild className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-500/25">
-                                    <Link href="/addresses/create">
+                                    <Link href="/collections/create">
                                         <Plus className="h-4 w-4 mr-2" />
-                                        Nouvelle adresse
+                                        Nouvelle collection
                                     </Link>
                                 </Button>
                             </div>
@@ -347,9 +348,9 @@ export default function Dashboard({ addresses, documents, collections, stats, ha
                                         </p>
                                         {!addressFilter && (
                                             <Button asChild className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white">
-                                                <Link href="/addresses/create">
+                                                <Link href="/collections/create">
                                                     <Plus className="h-4 w-4 mr-2" />
-                                                    Ajouter ma première adresse
+                                                    Créer une collection
                                                 </Link>
                                             </Button>
                                         )}

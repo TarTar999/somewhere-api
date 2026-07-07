@@ -178,11 +178,13 @@ const SideDrawer = React.forwardRef<HTMLDivElement, SideDrawerProps>(
                                 {/* Content */}
                                 <div
                                     className={cn(
-                                        'flex-1 overflow-y-auto',
+                                        'flex-1 overflow-y-auto overflow-x-hidden',
                                         contentClassName
                                     )}
                                 >
-                                    {children}
+                                    <div className="w-full max-w-full">
+                                        {children}
+                                    </div>
                                 </div>
 
                                 {/* Footer */}

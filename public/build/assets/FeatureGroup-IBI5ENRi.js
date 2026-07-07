@@ -1,1 +1,0 @@
-import{a}from"./leaflet-src-2PENUC-c.js";import{c as o,a as n,e as c}from"./TileLayer-jVltMBxK.js";const l=o(function({children:u,...r},t){const e=new a.FeatureGroup([],r);return n(e,c(t,{layerContainer:e,overlayContainer:e}))});export{l as F};

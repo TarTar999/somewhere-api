@@ -430,6 +430,16 @@
         border-left: 1px solid var(--glass-border);
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         transition: transform 0.3s ease-out;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    /* Responsive side drawer for mobile */
+    @media (max-width: 640px) {
+        .side-drawer {
+            max-width: 100%;
+            width: 100%;
+        }
     }
 
     /* Status Badge */

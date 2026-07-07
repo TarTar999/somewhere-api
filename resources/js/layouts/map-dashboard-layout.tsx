@@ -104,6 +104,7 @@ export function MapDashboardLayout({
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
     const [mobileSheetOpen, setMobileSheetOpen] = React.useState(true);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+    const [notificationsOpen, setNotificationsOpen] = React.useState(false);
     const [showPinSetup, setShowPinSetup] = React.useState(auth.needs_pin_setup ?? false);
 
     const navItems = navigationItems[type];
@@ -190,20 +191,55 @@ export function MapDashboardLayout({
                 {headerExtra}
 
                 {/* Notifications */}
-                <button
-                    type="button"
-                    className="relative p-2.5 rounded-xl hover:bg-gray-100 transition-all"
-                    onClick={() => {
-                        // TODO: Implémenter le panneau de notifications
-                    }}
-                >
-                    <Bell className="h-5 w-5 text-gray-500" />
-                    {notifications_count > 0 && (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-[10px] font-semibold text-white shadow-sm">
-                            {notifications_count > 9 ? '9+' : notifications_count}
-                        </span>
-                    )}
-                </button>
+                <div className="relative">
+                    <button
+                        type="button"
+                        className="relative p-2.5 rounded-xl hover:bg-gray-100 transition-all"
+                        onClick={() => setNotificationsOpen(!notificationsOpen)}
+                    >
+                        <Bell className="h-5 w-5 text-gray-500" />
+                        {notifications_count > 0 && (
+                            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-[10px] font-semibold text-white shadow-sm">
+                                {notifications_count > 9 ? '9+' : notifications_count}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Notifications Dropdown */}
+                    <AnimatePresence>
+                        {notificationsOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 py-2 z-50"
+                            >
+                                <div className="px-4 py-3 border-b border-gray-100">
+                                    <p className="font-semibold text-gray-900">
+                                        Notifications
+                                    </p>
+                                </div>
+                                <div className="py-4 px-4">
+                                    {notifications_count === 0 ? (
+                                        <div className="text-center py-6">
+                                            <Bell className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-500">
+                                                Aucune notification
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4">
+                                            <p className="text-sm text-gray-600">
+                                                Vous avez {notifications_count} notification{notifications_count > 1 ? 's' : ''}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* User Menu */}
                 <div className="relative">
@@ -376,12 +412,13 @@ export function MapDashboardLayout({
             )}
 
             {/* Click outside to close menus */}
-            {(userMenuOpen || mobileMenuOpen) && (
+            {(userMenuOpen || mobileMenuOpen || notificationsOpen) && (
                 <div
                     className="fixed inset-0 z-30"
                     onClick={() => {
                         setUserMenuOpen(false);
                         setMobileMenuOpen(false);
+                        setNotificationsOpen(false);
                     }}
                 />
             )}
