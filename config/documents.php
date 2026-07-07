@@ -20,7 +20,7 @@ return [
     |
     */
     'prices' => [
-        'location_plan' => env('PRICE_LOCATION_PLAN', 2000),
+        'location_plan' => env('PRICE_LOCATION_PLAN', 0),
         'proof_of_residence' => env('PRICE_PROOF_OF_RESIDENCE', 3000),
         'address_verification' => env('PRICE_ADDRESS_VERIFICATION', 1500),
         'bulk_export' => env('PRICE_BULK_EXPORT', 5000),

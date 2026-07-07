@@ -1,1 +1,0 @@
-import{a}from"./leaflet-src-CTS7DCqF.js";import{c as o,a as n,e as c}from"./TileLayer-Cqo-KAhx.js";const l=o(function({children:u,...r},t){const e=new a.FeatureGroup([],r);return n(e,c(t,{layerContainer:e,overlayContainer:e}))});export{l as F};

@@ -157,8 +157,7 @@ export default function Welcome({
                 'Domiciliation',
             ],
             extras: [
-                { name: 'Plan de localisation', price: '2 000 FCFA' },
-                { name: 'Attestation de résidence', price: '3 000 FCFA' },
+                { name: 'Plan de localisation', price: 'Gratuit' },
             ],
             popular: true,
             isEnterprise: false,
