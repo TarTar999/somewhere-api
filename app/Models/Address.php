@@ -38,6 +38,7 @@ class Address extends Model
         'is_non_habitation',
         'signature',
         'verification_status',
+        'rejection_reason',
         'video_path',
         // Itinerary fields
         'itinerary',

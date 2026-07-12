@@ -351,7 +351,26 @@ class PaymentController extends Controller
      */
     public function handleWebhook(Request $request): JsonResponse
     {
-        Log::info('Fapshi webhook received', $request->all());
+        // Verify webhook signature if configured
+        $webhookSecret = config('services.fapshi.webhook_secret');
+        if ($webhookSecret) {
+            $signature = $request->header('X-Fapshi-Signature');
+            $payload = $request->getContent();
+            $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
+
+            if (!$signature || !hash_equals($expectedSignature, $signature)) {
+                Log::warning('Fapshi webhook signature verification failed', [
+                    'ip' => $request->ip(),
+                    'has_signature' => !empty($signature),
+                ]);
+                return response()->json(['message' => 'Invalid signature'], 401);
+            }
+        }
+
+        Log::info('Fapshi webhook received', [
+            'transId' => $request->input('transId'),
+            'status' => $request->input('status'),
+        ]);
 
         $payment = $this->fapshiService->processWebhook($request->all());
 

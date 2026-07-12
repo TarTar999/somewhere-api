@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Transactional\AddressRejectedMail;
 use App\Models\Address;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -75,9 +77,20 @@ class AddressController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $address->update(['verification_status' => 'rejected']);
+        $address->update([
+            'verification_status' => 'rejected',
+            'rejection_reason' => $request->input('reason'),
+        ]);
 
-        // TODO: Send notification to user with rejection reason
+        // Send notification to user with rejection reason
+        $user = $address->user;
+        if ($user && $user->email) {
+            Mail::to($user->email)->send(new AddressRejectedMail(
+                $user,
+                $address,
+                $request->input('reason')
+            ));
+        }
 
         return redirect()->back()
             ->with('success', 'Address rejected');

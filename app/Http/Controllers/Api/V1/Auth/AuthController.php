@@ -13,6 +13,7 @@ use App\Services\TokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -165,10 +166,10 @@ class AuthController extends Controller
             ->orWhere('phone', '+' . $phone)
             ->first();
 
-        error_log("\n🔐 ===== LOGIN OTP =====");
-        error_log("Phone (original): {$request->phone}");
-        error_log("Phone (normalized): {$phone}");
-        error_log("User found: " . ($user ? "Yes (ID: {$user->id})" : "No"));
+        Log::debug('Login OTP request', [
+            'phone_normalized' => $phone,
+            'user_exists' => $user !== null,
+        ]);
 
         if (!$user) {
             // In production, don't reveal if user exists
@@ -177,8 +178,6 @@ class AuthController extends Controller
                     'expiresAt' => now()->addMinutes(10)->toIso8601String(),
                 ], 'If this phone number is registered, you will receive an OTP');
             }
-            // In development, still send OTP for testing
-            error_log("Dev mode: Sending OTP anyway for testing");
         }
 
         // Generate OTP with normalized phone
@@ -228,9 +227,9 @@ class AuthController extends Controller
         $phone = SmsService::normalizePhone($request->phone);
         $normalizedCode = str_replace('-', '', $request->code);
 
-        error_log("\n🔓 ===== LOGIN WITH OTP =====");
-        error_log("Phone (normalized): {$phone}");
-        error_log("Code: {$request->code} -> {$normalizedCode}");
+        Log::debug('Login with OTP attempt', [
+            'phone_normalized' => $phone,
+        ]);
 
         // Find valid OTP
         $otp = OtpCode::where('identifier', $phone)
@@ -240,7 +239,6 @@ class AuthController extends Controller
             ->get()
             ->first(fn($o) => str_replace('-', '', $o->code) === $normalizedCode);
 
-        error_log("OTP found: " . ($otp ? "Yes" : "No"));
 
         if (!$otp) {
             return $this->error('Invalid or expired code', 401);

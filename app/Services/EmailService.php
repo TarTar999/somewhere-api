@@ -3,7 +3,12 @@
 namespace App\Services;
 
 use App\Mail\Alert\DocumentExpiringMail;
+use App\Mail\Alert\SubscriptionExpiringMail;
+use App\Mail\Alert\SuspiciousActivityMail;
 use App\Mail\Transactional\DocumentGeneratedMail;
+use App\Mail\Transactional\KycStatusMail;
+use App\Mail\Transactional\PaymentConfirmationMail;
+use App\Models\Company;
 use App\Models\ProofOfLocation;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -77,11 +82,16 @@ class EmailService
      */
     public function sendPaymentConfirmation(User $user, array $paymentDetails): bool
     {
+        if (!$user->email) {
+            return false;
+        }
+
         try {
-            // TODO: Implement PaymentConfirmationMail
-            Log::info('Payment confirmation email would be sent', [
+            Mail::to($user->email)->send(new PaymentConfirmationMail($user, $paymentDetails));
+
+            Log::info('Payment confirmation email sent', [
                 'user_id' => $user->id,
-                'payment' => $paymentDetails,
+                'transaction_id' => $paymentDetails['transaction_id'] ?? null,
             ]);
 
             return true;
@@ -100,12 +110,16 @@ class EmailService
      */
     public function sendKycStatusUpdate(User $user, string $status, ?string $reason = null): bool
     {
+        if (!$user->email) {
+            return false;
+        }
+
         try {
-            // TODO: Implement KycStatusMail
-            Log::info('KYC status email would be sent', [
+            Mail::to($user->email)->send(new KycStatusMail($user, $status, $reason));
+
+            Log::info('KYC status email sent', [
                 'user_id' => $user->id,
                 'status' => $status,
-                'reason' => $reason,
             ]);
 
             return true;
@@ -122,22 +136,29 @@ class EmailService
     /**
      * Send subscription expiring alert to company admins.
      */
-    public function sendSubscriptionExpiringAlert($company, int $daysUntilExpiration): bool
+    public function sendSubscriptionExpiringAlert(Company $company, int $daysUntilExpiration): bool
     {
         try {
             // Get company admins
             $admins = $company->users()->wherePivot('role', 'admin')->get();
+            $sentCount = 0;
 
             foreach ($admins as $admin) {
-                // TODO: Implement SubscriptionExpiringMail
-                Log::info('Subscription expiring email would be sent', [
+                if (!$admin->email) {
+                    continue;
+                }
+
+                Mail::to($admin->email)->send(new SubscriptionExpiringMail($admin, $company, $daysUntilExpiration));
+                $sentCount++;
+
+                Log::info('Subscription expiring email sent', [
                     'company_id' => $company->id,
                     'admin_id' => $admin->id,
                     'days_until_expiration' => $daysUntilExpiration,
                 ]);
             }
 
-            return true;
+            return $sentCount > 0;
         } catch (\Exception $e) {
             Log::error('Failed to send subscription expiring email', [
                 'company_id' => $company->id,
@@ -153,11 +174,16 @@ class EmailService
      */
     public function sendSuspiciousActivityAlert(User $user, array $activityDetails): bool
     {
+        if (!$user->email) {
+            return false;
+        }
+
         try {
-            // TODO: Implement SuspiciousActivityMail
-            Log::info('Suspicious activity email would be sent', [
+            Mail::to($user->email)->send(new SuspiciousActivityMail($user, $activityDetails));
+
+            Log::info('Suspicious activity email sent', [
                 'user_id' => $user->id,
-                'activity' => $activityDetails,
+                'activity_type' => $activityDetails['type'] ?? 'unknown',
             ]);
 
             return true;

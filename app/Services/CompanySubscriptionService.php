@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\CompanyPayment;
 use App\Models\CompanySubscription;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CompanySubscriptionService
@@ -203,15 +204,26 @@ class CompanySubscriptionService
             ])
             ->get();
 
+        $emailService = app(EmailService::class);
+        $sentCount = 0;
+
         foreach ($subscriptions as $subscription) {
-            // Send notification to company admins
             $company = $subscription->company;
-            foreach ($company->admins as $admin) {
-                // TODO: Send email/notification
+            $daysUntilExpiration = now()->diffInDays($subscription->current_period_end, false);
+
+            try {
+                if ($emailService->sendSubscriptionExpiringAlert($company, $daysUntilExpiration)) {
+                    $sentCount++;
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send subscription renewal reminder', [
+                    'company_id' => $company->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
-        return $subscriptions->count();
+        return $sentCount;
     }
 
     public function getUsageStats(Company $company): array
