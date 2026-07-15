@@ -23,8 +23,6 @@ class SocialAuthService
      */
     public function verifyGoogleToken(string $idToken): array
     {
-        $client = new Google_Client();
-
         // Accept tokens from web, iOS, and Android clients
         $clientIds = array_filter([
             config('services.google.client_id'),
@@ -36,12 +34,23 @@ class SocialAuthService
             throw new InvalidArgumentException('Google client IDs not configured');
         }
 
-        $client->setAuthConfig(['client_id' => $clientIds[0]]);
+        // Create client and set the first client ID (required for initialization)
+        $client = new Google_Client(['client_id' => $clientIds[0]]);
 
-        $payload = $client->verifyIdToken($idToken, $clientIds);
+        // Verify the token - pass all valid client IDs as accepted audiences
+        $payload = $client->verifyIdToken($idToken);
 
         if (!$payload) {
             throw new InvalidArgumentException('Invalid Google token');
+        }
+
+        // Verify the audience is one of our valid client IDs
+        if (!in_array($payload['aud'], $clientIds)) {
+            Log::warning('Google token audience mismatch', [
+                'received_aud' => $payload['aud'],
+                'valid_auds' => $clientIds,
+            ]);
+            throw new InvalidArgumentException('Invalid Google token audience');
         }
 
         // Extract name parts
