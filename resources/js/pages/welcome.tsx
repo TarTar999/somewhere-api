@@ -32,8 +32,9 @@ import {
     X,
     Zap,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { dashboard, login, register } from '@/routes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import type { SharedData } from '@/types';
 
@@ -48,6 +49,13 @@ export default function Welcome({
     const [isVideoPlaying, setIsVideoPlaying] = useState(true);
     const [useCasePage, setUseCasePage] = useState(0);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const isMobile = useIsMobile();
+    const itemsPerPage = isMobile ? 1 : 3;
+
+    // Reset page when switching between mobile/desktop
+    useEffect(() => {
+        setUseCasePage(0);
+    }, [isMobile]);
 
     const toggleVideo = () => {
         if (videoRef.current) {
@@ -997,7 +1005,7 @@ export default function Welcome({
                                         setUseCasePage(
                                             Math.min(
                                                 Math.ceil(
-                                                    addressUseCases.length / 3,
+                                                    addressUseCases.length / itemsPerPage,
                                                 ) - 1,
                                                 useCasePage + 1,
                                             ),
@@ -1005,7 +1013,7 @@ export default function Welcome({
                                     }
                                     disabled={
                                         useCasePage >=
-                                        Math.ceil(addressUseCases.length / 3) -
+                                        Math.ceil(addressUseCases.length / itemsPerPage) -
                                             1
                                     }
                                     className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-indigo-200 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
@@ -1027,7 +1035,7 @@ export default function Welcome({
                                 >
                                     {Array.from({
                                         length: Math.ceil(
-                                            addressUseCases.length / 3,
+                                            addressUseCases.length / itemsPerPage,
                                         ),
                                     }).map((_, pageIndex) => (
                                         <div
@@ -1036,8 +1044,8 @@ export default function Welcome({
                                         >
                                             {addressUseCases
                                                 .slice(
-                                                    pageIndex * 3,
-                                                    pageIndex * 3 + 3,
+                                                    pageIndex * itemsPerPage,
+                                                    pageIndex * itemsPerPage + itemsPerPage,
                                                 )
                                                 .map((category) => (
                                                     <div
@@ -1110,7 +1118,7 @@ export default function Welcome({
                             <div className="mt-8 flex justify-center gap-2">
                                 {Array.from({
                                     length: Math.ceil(
-                                        addressUseCases.length / 3,
+                                        addressUseCases.length / itemsPerPage,
                                     ),
                                 }).map((_, index) => (
                                     <button
@@ -1144,7 +1152,7 @@ export default function Welcome({
                                         setUseCasePage(
                                             Math.min(
                                                 Math.ceil(
-                                                    addressUseCases.length / 3,
+                                                    addressUseCases.length / itemsPerPage,
                                                 ) - 1,
                                                 useCasePage + 1,
                                             ),
@@ -1152,7 +1160,7 @@ export default function Welcome({
                                     }
                                     disabled={
                                         useCasePage >=
-                                        Math.ceil(addressUseCases.length / 3) -
+                                        Math.ceil(addressUseCases.length / itemsPerPage) -
                                             1
                                     }
                                     className="flex items-center gap-2 rounded-lg bg-muted px-4 py-2 font-medium text-muted-foreground transition-all disabled:cursor-not-allowed disabled:opacity-30"
