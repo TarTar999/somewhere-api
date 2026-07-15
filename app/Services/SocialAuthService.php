@@ -101,6 +101,10 @@ class SocialAuthService
             ]);
 
             if (!in_array($decoded->aud, $validAudiences)) {
+                Log::warning('Apple token audience mismatch', [
+                    'received_aud' => $decoded->aud,
+                    'valid_auds' => $validAudiences,
+                ]);
                 throw new InvalidArgumentException('Invalid Apple token audience');
             }
 
