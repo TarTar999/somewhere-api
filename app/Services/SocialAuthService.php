@@ -216,17 +216,18 @@ class SocialAuthService
      */
     protected function getApplePublicKeys(): array
     {
-        // Cache the keys for 24 hours
-        return Cache::remember('apple_public_keys', 86400, function () {
+        // Cache the raw JSON keys for 24 hours (OpenSSL keys cannot be serialized)
+        $keysJson = Cache::remember('apple_public_keys_json', 86400, function () {
             $response = Http::get('https://appleid.apple.com/auth/keys');
 
             if (!$response->successful()) {
                 throw new InvalidArgumentException('Failed to fetch Apple public keys');
             }
 
-            $keys = $response->json();
-
-            return JWK::parseKeySet($keys);
+            return $response->json();
         });
+
+        // Parse the keys each time (cannot cache OpenSSL objects)
+        return JWK::parseKeySet($keysJson);
     }
 }
