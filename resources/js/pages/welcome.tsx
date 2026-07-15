@@ -587,9 +587,9 @@ export default function Welcome({
                 />
             </Head>
 
-            <div className="min-h-screen bg-white text-gray-900">
+            <div className="min-h-screen bg-background text-foreground">
                 {/* Navigation */}
-                <nav className="fixed top-0 right-0 left-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-md">
+                <nav className="fixed top-0 right-0 left-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 items-center justify-between">
                             {/* Logo */}
@@ -611,25 +611,25 @@ export default function Welcome({
                             <div className="hidden items-center gap-8 md:flex">
                                 <a
                                     href="#usages"
-                                    className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                 >
                                     À quoi ça sert ?
                                 </a>
                                 <a
                                     href="#features"
-                                    className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                 >
                                     Fonctionnalités
                                 </a>
                                 <a
                                     href="#pricing"
-                                    className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                 >
                                     Tarifs
                                 </a>
                                 <a
                                     href="#faq"
-                                    className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                 >
                                     FAQ
                                 </a>
@@ -648,7 +648,7 @@ export default function Welcome({
                                     <>
                                         <Link
                                             href={login()}
-                                            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                                         >
                                             Connexion
                                         </Link>
@@ -669,7 +669,7 @@ export default function Welcome({
                                 onClick={() =>
                                     setMobileMenuOpen(!mobileMenuOpen)
                                 }
-                                className="p-2 text-gray-600 md:hidden"
+                                className="p-2 text-muted-foreground md:hidden"
                             >
                                 {mobileMenuOpen ? (
                                     <X className="h-6 w-6" />
@@ -682,33 +682,33 @@ export default function Welcome({
 
                     {/* Mobile menu */}
                     {mobileMenuOpen && (
-                        <div className="border-t border-gray-100 bg-white px-4 py-4 md:hidden">
+                        <div className="border-t border-border bg-background px-4 py-4 md:hidden">
                             <div className="flex flex-col gap-4">
                                 <a
                                     href="#usages"
-                                    className="text-sm font-medium text-gray-600"
+                                    className="text-sm font-medium text-muted-foreground"
                                 >
                                     À quoi ça sert ?
                                 </a>
                                 <a
                                     href="#features"
-                                    className="text-sm font-medium text-gray-600"
+                                    className="text-sm font-medium text-muted-foreground"
                                 >
                                     Fonctionnalités
                                 </a>
                                 <a
                                     href="#pricing"
-                                    className="text-sm font-medium text-gray-600"
+                                    className="text-sm font-medium text-muted-foreground"
                                 >
                                     Tarifs
                                 </a>
                                 <a
                                     href="#faq"
-                                    className="text-sm font-medium text-gray-600"
+                                    className="text-sm font-medium text-muted-foreground"
                                 >
                                     FAQ
                                 </a>
-                                <hr className="border-gray-100" />
+                                <hr className="border-border" />
                                 {auth.user ? (
                                     <Link
                                         href={dashboard()}
@@ -720,7 +720,7 @@ export default function Welcome({
                                     <>
                                         <Link
                                             href={login()}
-                                            className="text-sm font-medium text-gray-600"
+                                            className="text-sm font-medium text-muted-foreground"
                                         >
                                             Connexion
                                         </Link>
@@ -755,7 +755,7 @@ export default function Welcome({
                                     </span>
                                     , simplement.
                                 </h1>
-                                <p className="mb-8 max-w-lg text-lg text-gray-600 lg:text-xl">
+                                <p className="mb-8 max-w-lg text-lg text-muted-foreground lg:text-xl">
                                     Obtenez une adresse unique et vérifiable
                                     pour votre domicile ou entreprise. Générez
                                     vos plans de localisation en quelques
@@ -771,7 +771,7 @@ export default function Welcome({
                                     </Link>
                                     <a
                                         href="#showcase"
-                                        className="inline-flex items-center justify-center rounded-xl bg-gray-100 px-6 py-3.5 text-base font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                                        className="inline-flex items-center justify-center rounded-xl bg-muted px-6 py-3.5 text-base font-medium text-muted-foreground transition-colors hover:bg-muted/80"
                                     >
                                         <Play className="mr-2 h-5 w-5" />
                                         Voir la démo
@@ -826,7 +826,7 @@ export default function Welcome({
                                     </a>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500">
+                                <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2">
                                         <CheckCircle className="h-5 w-5 text-green-500" />
                                         <span>Inscription gratuite</span>
@@ -849,7 +849,7 @@ export default function Welcome({
                                 transition={{ duration: 0.6, delay: 0.2 }}
                                 className="relative"
                             >
-                                <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-2xl shadow-indigo-500/20">
+                                <div className="relative overflow-hidden rounded-2xl border border-border shadow-2xl shadow-indigo-500/20">
                                     <video
                                         ref={videoRef}
                                         autoPlay
@@ -867,16 +867,16 @@ export default function Welcome({
                                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                                     <button
                                         onClick={toggleVideo}
-                                        className="absolute right-4 bottom-4 rounded-full bg-white/90 p-3 shadow-lg backdrop-blur-sm transition-colors hover:bg-white"
+                                        className="absolute right-4 bottom-4 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur-sm transition-colors hover:bg-card"
                                     >
                                         {isVideoPlaying ? (
-                                            <Pause className="h-5 w-5 text-gray-800" />
+                                            <Pause className="h-5 w-5 text-foreground" />
                                         ) : (
-                                            <Play className="h-5 w-5 text-gray-800" />
+                                            <Play className="h-5 w-5 text-foreground" />
                                         )}
                                     </button>
                                     {/* Floating badge */}
-                                    <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-sm font-medium text-gray-800 shadow-lg backdrop-blur-sm">
+                                    <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-background/90 px-3 py-1.5 text-sm font-medium text-foreground shadow-lg backdrop-blur-sm">
                                         <span className="relative flex h-2 w-2">
                                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                                             <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
@@ -910,7 +910,7 @@ export default function Welcome({
                                     </span>{' '}
                                     ?
                                 </h2>
-                                <p className="mx-auto max-w-3xl text-lg text-gray-600">
+                                <p className="mx-auto max-w-3xl text-lg text-muted-foreground">
                                     Au Cameroun, une adresse vérifiable est
                                     indispensable pour de nombreuses démarches
                                     du quotidien. Découvrez tous les domaines où
@@ -928,47 +928,47 @@ export default function Welcome({
                             className="mb-16"
                         >
                             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
+                                <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md">
                                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100">
                                         <Layers className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <div className="font-display text-3xl font-bold text-gray-900">
+                                    <div className="font-display text-3xl font-bold text-foreground">
                                         12+
                                     </div>
-                                    <div className="mt-1 text-sm text-gray-500">
+                                    <div className="mt-1 text-sm text-muted-foreground">
                                         Domaines d'utilisation
                                     </div>
                                 </div>
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
+                                <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md">
                                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100">
                                         <CheckCircle className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <div className="font-display text-3xl font-bold text-gray-900">
+                                    <div className="font-display text-3xl font-bold text-foreground">
                                         48+
                                     </div>
-                                    <div className="mt-1 text-sm text-gray-500">
+                                    <div className="mt-1 text-sm text-muted-foreground">
                                         Cas d'usage
                                     </div>
                                 </div>
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
+                                <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md">
                                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100">
                                         <Shield className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <div className="font-display text-3xl font-bold text-gray-900">
+                                    <div className="font-display text-3xl font-bold text-foreground">
                                         100%
                                     </div>
-                                    <div className="mt-1 text-sm text-gray-500">
+                                    <div className="mt-1 text-sm text-muted-foreground">
                                         Fonctionnelle & vérifiable
                                     </div>
                                 </div>
-                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-shadow hover:shadow-md">
+                                <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-shadow hover:shadow-md">
                                     <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100">
                                         <Zap className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <div className="font-display text-3xl font-bold text-gray-900">
+                                    <div className="font-display text-3xl font-bold text-foreground">
                                         5 min
                                     </div>
-                                    <div className="mt-1 text-sm text-gray-500">
+                                    <div className="mt-1 text-sm text-muted-foreground">
                                         Pour l'obtenir
                                     </div>
                                 </div>
@@ -986,7 +986,7 @@ export default function Welcome({
                                         )
                                     }
                                     disabled={useCasePage === 0}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:border-indigo-200 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-indigo-200 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
@@ -1008,7 +1008,7 @@ export default function Welcome({
                                         Math.ceil(addressUseCases.length / 3) -
                                             1
                                     }
-                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:border-indigo-200 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-all hover:border-indigo-200 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                                 >
                                     <ChevronRight className="h-5 w-5" />
                                 </button>
@@ -1042,21 +1042,21 @@ export default function Welcome({
                                                 .map((category) => (
                                                     <div
                                                         key={category.category}
-                                                        className="group flex-1 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:border-indigo-100 hover:shadow-lg"
+                                                        className="group flex-1 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-indigo-100 hover:shadow-lg"
                                                     >
                                                         {/* Category Header */}
-                                                        <div className="border-b border-gray-100 p-5">
+                                                        <div className="border-b border-border p-5">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 transition-colors group-hover:from-indigo-200 group-hover:to-violet-200">
                                                                     <category.icon className="h-6 w-6 text-indigo-600" />
                                                                 </div>
                                                                 <div>
-                                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                                    <h3 className="text-lg font-semibold text-foreground">
                                                                         {
                                                                             category.category
                                                                         }
                                                                     </h3>
-                                                                    <p className="text-sm text-gray-500">
+                                                                    <p className="text-sm text-muted-foreground">
                                                                         {
                                                                             category.description
                                                                         }
@@ -1083,12 +1083,12 @@ export default function Welcome({
                                                                                 <CheckCircle className="h-3 w-3 text-indigo-600" />
                                                                             </div>
                                                                             <div>
-                                                                                <p className="text-sm font-medium text-gray-900">
+                                                                                <p className="text-sm font-medium text-foreground">
                                                                                     {
                                                                                         useCase.title
                                                                                     }
                                                                                 </p>
-                                                                                <p className="mt-0.5 text-xs text-gray-500">
+                                                                                <p className="mt-0.5 text-xs text-muted-foreground">
                                                                                     {
                                                                                         useCase.description
                                                                                     }
@@ -1134,7 +1134,7 @@ export default function Welcome({
                                         )
                                     }
                                     disabled={useCasePage === 0}
-                                    className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-600 transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="flex items-center gap-2 rounded-lg bg-muted px-4 py-2 font-medium text-muted-foreground transition-all disabled:cursor-not-allowed disabled:opacity-30"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                     Précédent
@@ -1155,7 +1155,7 @@ export default function Welcome({
                                         Math.ceil(addressUseCases.length / 3) -
                                             1
                                     }
-                                    className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-600 transition-all disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="flex items-center gap-2 rounded-lg bg-muted px-4 py-2 font-medium text-muted-foreground transition-all disabled:cursor-not-allowed disabled:opacity-30"
                                 >
                                     Suivant
                                     <ChevronRight className="h-4 w-4" />
@@ -1184,7 +1184,7 @@ export default function Welcome({
                                         SomeWhere App
                                     </span>
                                 </h2>
-                                <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                                     Une plateforme complète pour gérer vos
                                     adresses et documents
                                 </p>
@@ -1202,7 +1202,7 @@ export default function Welcome({
                                         delay: index * 0.1,
                                     }}
                                     viewport={{ once: true }}
-                                    className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg transition-all hover:shadow-xl"
+                                    className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all hover:shadow-xl"
                                 >
                                     <div className="aspect-video overflow-hidden bg-gray-100">
                                         {item.type === 'video' ? (
@@ -1230,7 +1230,7 @@ export default function Welcome({
                                         <h3 className="mb-2 text-xl font-semibold">
                                             {item.title}
                                         </h3>
-                                        <p className="text-gray-600">
+                                        <p className="text-muted-foreground">
                                             {item.description}
                                         </p>
                                     </div>
@@ -1255,7 +1255,7 @@ export default function Welcome({
                                 <h2 className="mb-4 font-display text-3xl font-bold sm:text-4xl">
                                     Tout ce dont vous avez besoin
                                 </h2>
-                                <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                                     Une solution complète pour simplifier votre
                                     adresse et obtenir des documents officiels.
                                 </p>
@@ -1273,7 +1273,7 @@ export default function Welcome({
                                         delay: index * 0.1,
                                     }}
                                     viewport={{ once: true }}
-                                    className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-indigo-100 hover:shadow-lg"
+                                    className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-indigo-100 hover:shadow-lg"
                                 >
                                     <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 transition-colors group-hover:from-indigo-200 group-hover:to-violet-200">
                                         <feature.icon className="h-7 w-7 text-indigo-600" />
@@ -1281,7 +1281,7 @@ export default function Welcome({
                                     <h3 className="mb-2 text-lg font-semibold">
                                         {feature.title}
                                     </h3>
-                                    <p className="text-gray-600">
+                                    <p className="text-muted-foreground">
                                         {feature.description}
                                     </p>
                                 </motion.div>
@@ -1303,7 +1303,7 @@ export default function Welcome({
                                 <h2 className="mb-4 font-display text-3xl font-bold sm:text-4xl">
                                     Tarifs transparents
                                 </h2>
-                                <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
                                     Payez uniquement pour ce dont vous avez
                                     besoin. Pas d'abonnement obligatoire pour
                                     les particuliers.
@@ -1322,10 +1322,10 @@ export default function Welcome({
                                         delay: index * 0.1,
                                     }}
                                     viewport={{ once: true }}
-                                    className={`relative flex flex-col rounded-2xl bg-white p-8 ${
+                                    className={`relative flex flex-col rounded-2xl bg-card p-8 ${
                                         plan.popular
                                             ? 'shadow-xl ring-2 shadow-indigo-500/10 ring-indigo-500'
-                                            : 'border border-gray-100 shadow-sm'
+                                            : 'border border-border shadow-sm'
                                     }`}
                                 >
                                     {plan.popular && (
@@ -1339,13 +1339,13 @@ export default function Welcome({
                                         <h3 className="mb-2 text-xl font-semibold">
                                             {plan.name}
                                         </h3>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-muted-foreground">
                                             {plan.description}
                                         </p>
                                     </div>
                                     <div className="mb-6">
                                         {plan.pricePrefix && (
-                                            <span className="text-sm text-gray-500">
+                                            <span className="text-sm text-muted-foreground">
                                                 {plan.pricePrefix}{' '}
                                             </span>
                                         )}
@@ -1358,7 +1358,7 @@ export default function Welcome({
                                                 <span className="font-display text-4xl font-bold">
                                                     {plan.price}
                                                 </span>
-                                                <span className="text-gray-600">
+                                                <span className="text-muted-foreground">
                                                     {' '}
                                                     FCFA{plan.period || ''}
                                                 </span>
@@ -1372,15 +1372,15 @@ export default function Welcome({
                                                 className="flex items-start gap-3"
                                             >
                                                 <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
-                                                <span className="text-sm text-gray-600">
+                                                <span className="text-sm text-muted-foreground">
                                                     {feature}
                                                 </span>
                                             </li>
                                         ))}
                                     </ul>
                                     {plan.extras && (
-                                        <div className="mb-6 border-t border-gray-100 pt-4">
-                                            <p className="mb-3 text-xs font-medium text-gray-500 uppercase">
+                                        <div className="mb-6 border-t border-border pt-4">
+                                            <p className="mb-3 text-xs font-medium text-muted-foreground uppercase">
                                                 Documents additionnels
                                             </p>
                                             <ul className="space-y-2">
@@ -1393,7 +1393,7 @@ export default function Welcome({
                                                             key={extra.name}
                                                             className="flex items-center justify-between text-sm"
                                                         >
-                                                            <span className="text-gray-700">
+                                                            <span className="text-muted-foreground">
                                                                 {extra.name}
                                                             </span>
                                                             <span className="font-semibold text-indigo-600">
@@ -1419,7 +1419,7 @@ export default function Welcome({
                                                 className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                                                     plan.popular
                                                         ? 'hover:from-indigo-550 hover:to-violet-550 bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-sm shadow-indigo-500/15'
-                                                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                                        : 'bg-gray-100 text-foreground hover:bg-gray-200'
                                                 }`}
                                             >
                                                 Commencer
@@ -1459,7 +1459,7 @@ export default function Welcome({
                                         delay: index * 0.1,
                                     }}
                                     viewport={{ once: true }}
-                                    className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+                                    className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                                 >
                                     <div className="mb-4 flex gap-1">
                                         {[...Array(testimonial.rating)].map(
@@ -1471,7 +1471,7 @@ export default function Welcome({
                                             ),
                                         )}
                                     </div>
-                                    <p className="mb-6 text-lg text-gray-700">
+                                    <p className="mb-6 text-lg text-muted-foreground">
                                         "{testimonial.content}"
                                     </p>
                                     <div className="flex items-center gap-3">
@@ -1484,7 +1484,7 @@ export default function Welcome({
                                             <p className="font-semibold">
                                                 {testimonial.name}
                                             </p>
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-muted-foreground">
                                                 {testimonial.role}
                                             </p>
                                         </div>
@@ -1522,7 +1522,7 @@ export default function Welcome({
                                         delay: index * 0.05,
                                     }}
                                     viewport={{ once: true }}
-                                    className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+                                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
                                 >
                                     <button
                                         onClick={() =>
@@ -1538,7 +1538,7 @@ export default function Welcome({
                                             {faq.question}
                                         </span>
                                         <ChevronDown
-                                            className={`h-5 w-5 text-gray-500 transition-transform ${
+                                            className={`h-5 w-5 text-muted-foreground transition-transform ${
                                                 openFaq === index
                                                     ? 'rotate-180'
                                                     : ''
@@ -1547,7 +1547,7 @@ export default function Welcome({
                                     </button>
                                     {openFaq === index && (
                                         <div className="px-6 pb-5">
-                                            <p className="text-gray-600">
+                                            <p className="text-muted-foreground">
                                                 {faq.answer}
                                             </p>
                                         </div>
@@ -1583,7 +1583,7 @@ export default function Welcome({
                                 <div className="flex flex-col justify-center gap-4 sm:flex-row">
                                     <Link
                                         href={register()}
-                                        className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-base font-medium text-indigo-600 shadow-xl transition-colors hover:bg-gray-100"
+                                        className="inline-flex items-center justify-center rounded-xl bg-card px-8 py-4 text-base font-medium text-indigo-600 shadow-xl transition-colors hover:bg-muted"
                                     >
                                         Créer mon compte gratuitement
                                         <ChevronRight className="ml-2 h-5 w-5" />
@@ -1613,7 +1613,7 @@ export default function Welcome({
                                         SomeWhere App
                                     </span>
                                 </div>
-                                <p className="mb-4 text-sm text-gray-400">
+                                <p className="mb-4 text-sm text-muted-foreground">
                                     La solution d'adressage intelligent au
                                     Cameroun.
                                 </p>
@@ -1647,7 +1647,7 @@ export default function Welcome({
                             </div>
                             <div>
                                 <h4 className="mb-4 font-semibold">Produit</h4>
-                                <ul className="space-y-2 text-sm text-gray-400">
+                                <ul className="space-y-2 text-sm text-muted-foreground">
                                     <li>
                                         <a
                                             href="#features"
@@ -1684,7 +1684,7 @@ export default function Welcome({
                             </div>
                             <div>
                                 <h4 className="mb-4 font-semibold">Support</h4>
-                                <ul className="space-y-2 text-sm text-gray-400">
+                                <ul className="space-y-2 text-sm text-muted-foreground">
                                     <li>
                                         <a
                                             href="#faq"
@@ -1713,7 +1713,7 @@ export default function Welcome({
                             </div>
                             <div>
                                 <h4 className="mb-4 font-semibold">Légal</h4>
-                                <ul className="space-y-2 text-sm text-gray-400">
+                                <ul className="space-y-2 text-sm text-muted-foreground">
                                     <li>
                                         <a
                                             href="#"
@@ -1741,8 +1741,8 @@ export default function Welcome({
                                 </ul>
                             </div>
                         </div>
-                        <div className="flex justify-center border-t border-gray-800 pt-8">
-                            <p className="text-sm text-gray-400">
+                        <div className="flex justify-center border-t border-border pt-8">
+                            <p className="text-sm text-muted-foreground">
                                 © {new Date().getFullYear()} Ket-Up SARL. Tous
                                 droits réservés.
                             </p>

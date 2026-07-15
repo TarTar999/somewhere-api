@@ -32,7 +32,7 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="text-gray-700 hover:bg-gray-50 data-[state=open]:bg-gray-50 rounded-xl"
+                            className="text-foreground hover:bg-muted data-[state=open]:bg-muted rounded-xl"
                             data-test="sidebar-menu-button"
                         >
                             <Avatar className="overflow-hidden rounded-xl flex-shrink-0 h-8 w-8 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10">
@@ -42,13 +42,13 @@ export function NavUser() {
                                 </AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                                <span className="truncate font-semibold text-gray-900">{fullName}</span>
+                                <span className="truncate font-semibold text-foreground">{fullName}</span>
                             </div>
-                            <ChevronsUpDown className="ml-auto size-4 text-gray-400 group-data-[collapsible=icon]:hidden" />
+                            <ChevronsUpDown className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl shadow-lg shadow-gray-200/50 border-gray-100"
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl shadow-lg border-border"
                         align="end"
                         side={isMobile ? 'bottom' : isCollapsed ? 'right' : 'bottom'}
                     >

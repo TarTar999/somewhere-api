@@ -205,6 +205,8 @@ function DeliveryCard({ delivery }: { delivery: DeliveryRequest }) {
 export default function DeliveriesIndex({ sent, received, stats, addresses }: Props) {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [createSuccess, setCreateSuccess] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -214,9 +216,13 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
     });
 
     const handleCreate = async () => {
-        if (!formData.title || !formData.pickup_address_id) return;
+        if (!formData.title || !formData.pickup_address_id) {
+            setCreateError('Veuillez remplir tous les champs obligatoires');
+            return;
+        }
 
         setIsSubmitting(true);
+        setCreateError(null);
 
         try {
             const response = await fetch('/api/v1/delivery-requests', {
@@ -234,8 +240,10 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
                 }),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                setShowCreateDialog(false);
+                setCreateSuccess(true);
                 setFormData({
                     title: '',
                     description: '',
@@ -243,12 +251,28 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
                     currency: 'XAF',
                     pickup_address_id: '',
                 });
-                router.reload();
+                // Attendre un peu avant de fermer pour montrer le message de succès
+                setTimeout(() => {
+                    setShowCreateDialog(false);
+                    setCreateSuccess(false);
+                    router.reload();
+                }, 1500);
+            } else {
+                setCreateError(data.message || 'Une erreur est survenue lors de la création de la livraison');
             }
         } catch {
-            // Handle error
+            setCreateError('Erreur de connexion. Veuillez vérifier votre connexion internet.');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // Réinitialiser les erreurs quand le dialogue se ferme
+    const handleDialogChange = (open: boolean) => {
+        setShowCreateDialog(open);
+        if (!open) {
+            setCreateError(null);
+            setCreateSuccess(false);
         }
     };
 
@@ -376,7 +400,7 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
             </div>
 
             {/* Create Dialog */}
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <Dialog open={showCreateDialog} onOpenChange={handleDialogChange}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Nouvelle demande de livraison</DialogTitle>
@@ -384,6 +408,20 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
                             Créez une demande et partagez le lien avec le destinataire
                         </DialogDescription>
                     </DialogHeader>
+
+                    {/* Messages de succès/erreur */}
+                    {createSuccess && (
+                        <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-900/20 p-3 text-green-800 dark:text-green-200">
+                            <CheckCircle className="h-5 w-5" />
+                            <span className="text-sm font-medium">Livraison créée avec succès !</span>
+                        </div>
+                    )}
+                    {createError && (
+                        <div className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-red-800 dark:text-red-200">
+                            <XCircle className="h-5 w-5" />
+                            <span className="text-sm font-medium">{createError}</span>
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         <div className="space-y-2">
@@ -472,7 +510,7 @@ export default function DeliveriesIndex({ sent, received, stats, addresses }: Pr
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                        <Button variant="outline" onClick={() => handleDialogChange(false)}>
                             Annuler
                         </Button>
                         <Button

@@ -27,11 +27,11 @@ export default function Register() {
                     <>
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name" className="text-gray-700 font-medium">
+                                <Label htmlFor="name" className="text-foreground font-medium">
                                     Nom complet
                                 </Label>
                                 <div className="relative">
-                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="name"
                                         type="text"
@@ -41,18 +41,18 @@ export default function Register() {
                                         autoComplete="name"
                                         name="name"
                                         placeholder="Jean Dupont"
-                                        className="pl-12 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                        className="pl-12 h-12 rounded-xl"
                                     />
                                 </div>
                                 <InputError message={errors.name} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="phone" className="text-gray-700 font-medium">
+                                <Label htmlFor="phone" className="text-foreground font-medium">
                                     Numéro de téléphone
                                 </Label>
                                 <div className="relative">
-                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="phone"
                                         type="tel"
@@ -61,18 +61,18 @@ export default function Register() {
                                         autoComplete="tel"
                                         name="phone"
                                         placeholder="6XXXXXXXX"
-                                        className="pl-12 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                        className="pl-12 h-12 rounded-xl"
                                     />
                                 </div>
                                 <InputError message={errors.phone} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password" className="text-gray-700 font-medium">
+                                <Label htmlFor="password" className="text-foreground font-medium">
                                     Mot de passe
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type="password"
@@ -81,18 +81,18 @@ export default function Register() {
                                         autoComplete="new-password"
                                         name="password"
                                         placeholder="••••••••"
-                                        className="pl-12 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                        className="pl-12 h-12 rounded-xl"
                                     />
                                 </div>
                                 <InputError message={errors.password} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password_confirmation" className="text-gray-700 font-medium">
+                                <Label htmlFor="password_confirmation" className="text-foreground font-medium">
                                     Confirmer le mot de passe
                                 </Label>
                                 <div className="relative">
-                                    <CheckCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <CheckCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="password_confirmation"
                                         type="password"
@@ -101,7 +101,7 @@ export default function Register() {
                                         autoComplete="new-password"
                                         name="password_confirmation"
                                         placeholder="••••••••"
-                                        className="pl-12 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                        className="pl-12 h-12 rounded-xl"
                                     />
                                 </div>
                                 <InputError message={errors.password_confirmation} />
@@ -118,13 +118,13 @@ export default function Register() {
                             </Button>
                         </div>
 
-                        <div className="pt-4 text-center border-t border-gray-100">
-                            <p className="text-sm text-gray-500">
+                        <div className="pt-4 text-center border-t border-border">
+                            <p className="text-sm text-muted-foreground">
                                 Déjà un compte ?{' '}
                                 <TextLink
                                     href={login()}
                                     tabIndex={6}
-                                    className="font-semibold text-indigo-600 hover:text-indigo-700"
+                                    className="font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                                 >
                                     Se connecter
                                 </TextLink>

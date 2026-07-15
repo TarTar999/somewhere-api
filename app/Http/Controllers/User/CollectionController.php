@@ -5,9 +5,11 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\SharedCollection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
 
 class CollectionController extends Controller
 {
@@ -132,6 +134,123 @@ class CollectionController extends Controller
             'collection' => $this->formatCollection($collection, 'owner'),
             'addresses' => $addresses,
         ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'color' => 'nullable|string|max:7',
+            'icon' => 'nullable|string|max:50',
+            'address_ids' => 'nullable|array',
+            'address_ids.*' => 'exists:addresses,id',
+        ]);
+
+        $collection = Collection::create([
+            'owner_id' => auth()->id(),
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'color' => $validated['color'] ?? null,
+            'icon' => $validated['icon'] ?? null,
+            'type' => 'custom',
+        ]);
+
+        if (!empty($validated['address_ids'])) {
+            $collection->addresses()->sync($validated['address_ids']);
+        }
+
+        return redirect()->route('collections.show', $collection)
+            ->with('success', 'Collection créée avec succès.');
+    }
+
+    public function update(Request $request, Collection $collection): RedirectResponse
+    {
+        if ($collection->owner_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'color' => 'nullable|string|max:7',
+            'icon' => 'nullable|string|max:50',
+            'address_ids' => 'nullable|array',
+            'address_ids.*' => 'exists:addresses,id',
+        ]);
+
+        $collection->update([
+            'name' => $validated['name'] ?? $collection->name,
+            'description' => $validated['description'] ?? $collection->description,
+            'color' => $validated['color'] ?? $collection->color,
+            'icon' => $validated['icon'] ?? $collection->icon,
+        ]);
+
+        if (array_key_exists('address_ids', $validated)) {
+            $collection->addresses()->sync($validated['address_ids'] ?? []);
+        }
+
+        return redirect()->route('collections.show', $collection)
+            ->with('success', 'Collection mise à jour avec succès.');
+    }
+
+    public function destroy(Collection $collection): RedirectResponse
+    {
+        if ($collection->owner_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $collection->delete();
+
+        return redirect()->route('collections.index')
+            ->with('success', 'Collection supprimée avec succès.');
+    }
+
+    public function share(Request $request, Collection $collection): RedirectResponse
+    {
+        if ($collection->owner_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'recipientPhone' => 'required|string',
+            'permissions' => 'nullable|array',
+        ]);
+
+        // Find recipient by phone number
+        $phone = $validated['recipientPhone'];
+        $recipient = User::where('phone', $phone)
+            ->orWhere('phone', '+' . $phone)
+            ->orWhere('phone', '+' . ltrim($phone, '+'))
+            ->first();
+
+        if (!$recipient) {
+            return redirect()->back()
+                ->with('error', 'Utilisateur non trouvé avec ce numéro de téléphone.');
+        }
+
+        if ($recipient->id === auth()->id()) {
+            return redirect()->back()
+                ->with('error', 'Vous ne pouvez pas partager une collection avec vous-même.');
+        }
+
+        // Check if already shared
+        $existing = SharedCollection::where('collection_id', $collection->id)
+            ->where('shared_with_user_id', $recipient->id)
+            ->first();
+
+        if ($existing) {
+            $existing->update(['permissions' => $validated['permissions'] ?? ['view']]);
+        } else {
+            SharedCollection::create([
+                'collection_id' => $collection->id,
+                'shared_with_user_id' => $recipient->id,
+                'permissions' => $validated['permissions'] ?? ['view'],
+            ]);
+        }
+
+        return redirect()->back()
+            ->with('success', 'Collection partagée avec succès.');
     }
 
     protected function canAccessCollection(Collection $collection, int $userId): bool

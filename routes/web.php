@@ -54,8 +54,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('collections')->name('collections.')->group(function () {
         Route::get('/', [CollectionController::class, 'index'])->name('index');
         Route::get('/create', [CollectionController::class, 'create'])->name('create');
+        Route::post('/', [CollectionController::class, 'store'])->name('store');
         Route::get('/{collection}', [CollectionController::class, 'show'])->name('show');
         Route::get('/{collection}/edit', [CollectionController::class, 'edit'])->name('edit');
+        Route::put('/{collection}', [CollectionController::class, 'update'])->name('update');
+        Route::delete('/{collection}', [CollectionController::class, 'destroy'])->name('destroy');
+        Route::post('/{collection}/share', [CollectionController::class, 'share'])->name('share');
     });
 
     // Deliveries
