@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\ProofOfResidenceController;
 use App\Http\Controllers\Api\V1\StreetController;
 use App\Http\Controllers\Api\V1\TrackController;
 use App\Http\Controllers\Api\V1\WebAccessController;
+use App\Http\Controllers\Api\V1\EneoAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -464,6 +465,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Accept company invitation (outside company middleware)
     Route::post('companies/invitation/{token}/accept', [CompanyMemberController::class, 'acceptInvitation']);
+
+    // ENEO Admin (restricted to fredy.rayan@gmail.com)
+    Route::prefix('eneo-admin')->group(function () {
+        Route::get('config', [EneoAdminController::class, 'getConfig']);
+        Route::put('config', [EneoAdminController::class, 'updateConfig']);
+        Route::post('sync', [EneoAdminController::class, 'sync']);
+        Route::delete('past', [EneoAdminController::class, 'deletePast']);
+        Route::get('programmes', [EneoAdminController::class, 'getProgrammes']);
+    });
 });
 
 /*

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EneoController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -45,4 +46,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('notifications/create', [NotificationController::class, 'create'])->name('notifications.create');
     Route::post('notifications/send', [NotificationController::class, 'send'])->name('notifications.send');
     Route::get('notifications/stats', [NotificationController::class, 'stats'])->name('notifications.stats');
+
+    // ENEO management (restricted to specific user in controller)
+    Route::get('eneo', [EneoController::class, 'index'])->name('eneo.index');
+    Route::put('eneo/config', [EneoController::class, 'updateConfig'])->name('eneo.config');
+    Route::post('eneo/sync', [EneoController::class, 'sync'])->name('eneo.sync');
+    Route::delete('eneo/past', [EneoController::class, 'deletePast'])->name('eneo.delete-past');
 });
