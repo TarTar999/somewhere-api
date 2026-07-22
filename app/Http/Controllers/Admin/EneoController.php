@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\OutageProgramme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -89,123 +88,78 @@ class EneoController extends Controller
     }
 
     /**
-     * Sync programmes from ENEO API
+     * Save programmes sent from client-side fetch
      */
     public function sync(Request $request): JsonResponse
     {
         $this->checkAccess($request);
 
-        $configPath = storage_path('app/eneo_config.json');
-        $baseUrl = self::DEFAULT_ENEO_URL;
+        $request->validate([
+            'programmes' => 'required|array',
+        ]);
 
-        if (file_exists($configPath)) {
-            $config = json_decode(file_get_contents($configPath), true);
-            $baseUrl = $config['url'] ?? self::DEFAULT_ENEO_URL;
-        }
+        $programmes = $request->input('programmes', []);
 
         $stats = [
-            'fetched' => 0,
+            'fetched' => count($programmes),
             'created' => 0,
             'updated' => 0,
             'skipped' => 0,
             'errors' => 0,
         ];
 
-        try {
-            Log::info('Starting ENEO manual sync from web', ['url' => $baseUrl, 'user' => $request->user()->email]);
+        $today = now()->toDateString();
 
-            $page = 1;
-            $hasMorePages = true;
-            $allProgrammes = [];
+        Log::info('Saving ENEO programmes from client', ['count' => count($programmes), 'user' => $request->user()->email]);
 
-            while ($hasMorePages && $page <= 50) {
-                $separator = str_contains($baseUrl, '?') ? '&' : '?';
-                $url = "{$baseUrl}{$separator}page={$page}&per_page=100";
-
-                $response = Http::timeout(30)->accept('application/json')->get($url);
-
-                if (!$response->successful()) {
-                    Log::error('ENEO API request failed', ['status' => $response->status(), 'page' => $page]);
-                    break;
-                }
-
-                $data = $response->json();
-
-                if (!isset($data['status']) || $data['status'] !== true) {
-                    Log::error('ENEO API returned error', ['response' => $data]);
-                    break;
-                }
-
-                $programmes = $data['data']['programmes'] ?? [];
-                $allProgrammes = array_merge($allProgrammes, $programmes);
-
-                $pagination = $data['data']['pagination'] ?? [];
-                $hasMorePages = $pagination['has_more_pages'] ?? false;
-                $page++;
-
-                usleep(100000); // 100ms delay
+        foreach ($programmes as $prog) {
+            // Only sync upcoming programmes
+            if (($prog['prog_date'] ?? '') < $today) {
+                continue;
             }
 
-            $stats['fetched'] = count($allProgrammes);
-            $today = now()->toDateString();
+            try {
+                // Check for existing by external_id
+                $existing = OutageProgramme::where('external_id', $prog['id'])->first();
 
-            foreach ($allProgrammes as $prog) {
-                // Only sync upcoming programmes
-                if (($prog['prog_date'] ?? '') < $today) {
-                    continue;
+                if (!$existing) {
+                    // Check for duplicate by location/date/time
+                    $duplicate = OutageProgramme::where('prog_date', $prog['prog_date'])
+                        ->where('prog_heure_debut', $prog['prog_heure_debut'] ?? null)
+                        ->where('prog_heure_fin', $prog['prog_heure_fin'] ?? null)
+                        ->where('ville', $prog['ville'] ?? null)
+                        ->where('zone', $prog['zone'] ?? null)
+                        ->first();
+
+                    if ($duplicate) {
+                        $stats['skipped']++;
+                        continue;
+                    }
                 }
 
-                try {
-                    // Check for existing by external_id
-                    $existing = OutageProgramme::where('external_id', $prog['id'])->first();
+                OutageProgramme::createOrUpdateFromApi($prog);
 
-                    if (!$existing) {
-                        // Check for duplicate by location/date/time
-                        $duplicate = OutageProgramme::where('prog_date', $prog['prog_date'])
-                            ->where('prog_heure_debut', $prog['prog_heure_debut'] ?? null)
-                            ->where('prog_heure_fin', $prog['prog_heure_fin'] ?? null)
-                            ->where('ville', $prog['ville'] ?? null)
-                            ->where('zone', $prog['zone'] ?? null)
-                            ->first();
-
-                        if ($duplicate) {
-                            $stats['skipped']++;
-                            continue;
-                        }
-                    }
-
-                    OutageProgramme::createOrUpdateFromApi($prog);
-
-                    if ($existing) {
-                        $stats['updated']++;
-                    } else {
-                        $stats['created']++;
-                    }
-                } catch (\Exception $e) {
-                    $stats['errors']++;
-                    Log::error('Failed to sync programme', [
-                        'external_id' => $prog['id'] ?? 'unknown',
-                        'error' => $e->getMessage(),
-                    ]);
+                if ($existing) {
+                    $stats['updated']++;
+                } else {
+                    $stats['created']++;
                 }
+            } catch (\Exception $e) {
+                $stats['errors']++;
+                Log::error('Failed to sync programme', [
+                    'external_id' => $prog['id'] ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
             }
-
-            Log::info('ENEO manual sync completed', $stats);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Synchronisation terminée',
-                'stats' => $stats,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('ENEO sync failed', ['error' => $e->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage(),
-            ], 500);
         }
+
+        Log::info('ENEO programmes saved', $stats);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Synchronisation terminée',
+            'stats' => $stats,
+        ]);
     }
 
     /**

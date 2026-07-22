@@ -99,12 +99,57 @@ export default function EneoIndex({ config, stats, programmes, defaultUrl }: Pro
         setSyncStats(null);
 
         try {
+            // Step 1: Fetch from ENEO API directly from browser
+            setMessage({ type: 'success', text: 'Recuperation des programmes depuis ENEO...' });
+
+            const allProgrammes: any[] = [];
+            let page = 1;
+            let hasMorePages = true;
+            const baseUrl = url;
+
+            while (hasMorePages && page <= 50) {
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const fetchUrl = `${baseUrl}${separator}page=${page}&per_page=100`;
+
+                const eneoResponse = await fetch(fetchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                if (!eneoResponse.ok) {
+                    throw new Error(`ENEO API error: ${eneoResponse.status}`);
+                }
+
+                const eneoData = await eneoResponse.json();
+
+                if (!eneoData.status) {
+                    throw new Error(eneoData.message || 'ENEO API returned error');
+                }
+
+                const programmes = eneoData.data?.programmes || [];
+                allProgrammes.push(...programmes);
+
+                hasMorePages = eneoData.data?.pagination?.has_more_pages || false;
+                page++;
+
+                setMessage({ type: 'success', text: `Recuperation page ${page - 1}... (${allProgrammes.length} programmes)` });
+
+                // Small delay to not overwhelm the API
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            setMessage({ type: 'success', text: `${allProgrammes.length} programmes recuperes. Sauvegarde en cours...` });
+
+            // Step 2: Send programmes to our backend to save
             const response = await fetch('/admin/eneo/sync', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
+                body: JSON.stringify({ programmes: allProgrammes }),
             });
 
             const data = await response.json();
@@ -114,10 +159,10 @@ export default function EneoIndex({ config, stats, programmes, defaultUrl }: Pro
                 setSyncStats(data.stats);
                 router.reload({ only: ['stats', 'programmes'] });
             } else {
-                setMessage({ type: 'error', text: data.message || 'Erreur de synchronisation' });
+                setMessage({ type: 'error', text: data.message || 'Erreur de sauvegarde' });
             }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
+        } catch (error: any) {
+            setMessage({ type: 'error', text: `Erreur: ${error.message}` });
         } finally {
             setIsSyncing(false);
         }
