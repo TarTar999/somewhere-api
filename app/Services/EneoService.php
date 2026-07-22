@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 class EneoService
 {
     protected string $baseUrl = 'https://myeprdxpibv11.eneoapps.com/index.php';
+    protected string $region = 'littoral';
 
     /**
      * Récupérer tous les programmes de coupure depuis l'API ENEO
@@ -59,6 +60,7 @@ class EneoService
             $response = Http::timeout(30)
                 ->accept('application/json')
                 ->get("{$this->baseUrl}/outage-programmes", [
+                    'region' => $this->region,
                     'page' => $page,
                     'per_page' => $perPage,
                 ]);
