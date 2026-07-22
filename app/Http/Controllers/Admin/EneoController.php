@@ -16,21 +16,19 @@ class EneoController extends Controller
     private const ALLOWED_EMAIL = 'fredy.rayan@gmail.com';
     private const DEFAULT_ENEO_URL = 'https://myeprdxpibv11.eneoapps.com/index.php/outage-programmes?region=littoral';
 
-    public function __construct()
+    private function checkAccess(Request $request): void
     {
-        $this->middleware(function ($request, $next) {
-            if ($request->user()->email !== self::ALLOWED_EMAIL) {
-                abort(403, 'Accès non autorisé à cette section.');
-            }
-            return $next($request);
-        });
+        if ($request->user()->email !== self::ALLOWED_EMAIL) {
+            abort(403, 'Accès non autorisé à cette section.');
+        }
     }
 
     /**
      * Show ENEO admin page
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $this->checkAccess($request);
         $configPath = storage_path('app/eneo_config.json');
         $config = [
             'url' => self::DEFAULT_ENEO_URL,
@@ -68,6 +66,8 @@ class EneoController extends Controller
      */
     public function updateConfig(Request $request): JsonResponse
     {
+        $this->checkAccess($request);
+
         $request->validate([
             'url' => 'required|url',
         ]);
@@ -93,6 +93,8 @@ class EneoController extends Controller
      */
     public function sync(Request $request): JsonResponse
     {
+        $this->checkAccess($request);
+
         $configPath = storage_path('app/eneo_config.json');
         $baseUrl = self::DEFAULT_ENEO_URL;
 
@@ -209,8 +211,10 @@ class EneoController extends Controller
     /**
      * Delete past programmes
      */
-    public function deletePast(): JsonResponse
+    public function deletePast(Request $request): JsonResponse
     {
+        $this->checkAccess($request);
+
         $today = now()->toDateString();
         $deleted = OutageProgramme::where('prog_date', '<', $today)->delete();
 
