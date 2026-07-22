@@ -186,8 +186,18 @@ class OutageProgramme extends Model
     {
         $zonesArray = $data['zones_array'] ?? [];
 
+        // Si zones_array est une chaîne JSON, la décoder
+        if (is_string($zonesArray)) {
+            $zonesArray = json_decode($zonesArray, true) ?? [];
+        }
+
+        // Si zones_array est vide, parser le champ zone (séparé par virgules)
+        if (empty($zonesArray) && !empty($data['zone'])) {
+            $zonesArray = array_map('trim', explode(',', $data['zone']));
+        }
+
         // Nettoyer les zones (trim)
-        $zonesArray = array_map('trim', $zonesArray);
+        $zonesArray = is_array($zonesArray) ? array_map('trim', $zonesArray) : [];
         $zonesArray = array_filter($zonesArray);
 
         $programme = self::updateOrCreate(
