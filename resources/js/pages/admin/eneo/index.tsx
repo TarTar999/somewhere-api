@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -70,16 +71,7 @@ export default function EneoIndex({ config, stats, programmes, defaultUrl }: Pro
         setMessage(null);
 
         try {
-            const response = await fetch('/admin/eneo/config', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ url }),
-            });
-
-            const data = await response.json();
+            const { data } = await axios.put('/admin/eneo/config', { url });
 
             if (data.success) {
                 setMessage({ type: 'success', text: 'Configuration sauvegardee' });
@@ -123,17 +115,8 @@ export default function EneoIndex({ config, stats, programmes, defaultUrl }: Pro
 
             setMessage({ type: 'success', text: `${programmes.length} programmes recuperes. Sauvegarde en cours...` });
 
-            // Send programmes to our backend to save
-            const response = await fetch('/admin/eneo/sync', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ programmes }),
-            });
-
-            const data = await response.json();
+            // Send programmes to our backend to save (axios handles CSRF automatically)
+            const { data } = await axios.post('/admin/eneo/sync', { programmes });
 
             if (data.success) {
                 setMessage({ type: 'success', text: data.message });
@@ -158,14 +141,7 @@ export default function EneoIndex({ config, stats, programmes, defaultUrl }: Pro
         setMessage(null);
 
         try {
-            const response = await fetch('/admin/eneo/past', {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const data = await response.json();
+            const { data } = await axios.delete('/admin/eneo/past');
 
             if (data.success) {
                 setMessage({ type: 'success', text: data.message });
