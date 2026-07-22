@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Address;
 use App\Models\Domiciliation;
+use App\Services\OutageMatchingService;
 use App\Services\QrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Validator;
 class DomiciliationController extends Controller
 {
     public function __construct(
-        protected QrCodeService $qrCodeService
+        protected QrCodeService $qrCodeService,
+        protected OutageMatchingService $outageService
     ) {}
 
     /**
@@ -424,7 +426,7 @@ class DomiciliationController extends Controller
 
     protected function formatAddress(Address $address): array
     {
-        return [
+        $data = [
             'id' => $address->id,
             'swAddress' => $address->sw_address,
             'displayName' => $address->display_name,
@@ -433,5 +435,11 @@ class DomiciliationController extends Controller
             'way' => $address->way,
             'shareUrl' => $address->getShareUrl(),
         ];
+
+        // Enrichir avec les informations de coupures d'électricité
+        $outages = $this->outageService->findOutagesForAddress($address);
+        $data['powerOutages'] = $this->outageService->formatOutagesForApi($outages);
+
+        return $data;
     }
 }
