@@ -1,1 +1,0 @@
-import{r as t}from"./app-BMVRUd0w.js";const r=768,e=typeof window>"u"?void 0:window.matchMedia(`(max-width: ${r-1}px)`);function i(n){return e?(e.addEventListener("change",n),()=>{e.removeEventListener("change",n)}):()=>{}}function o(){return e?.matches??!1}function a(){return!1}function u(){return t.useSyncExternalStore(i,o,a)}export{u};
