@@ -433,6 +433,12 @@ export default function AdminDashboard({
                                 Paramètres
                             </Button>
                         </Link>
+                        <Link href="/admin/eneo">
+                            <Button variant="outline" size="sm" className="w-full justify-start text-yellow-600 border-yellow-300 hover:bg-yellow-50">
+                                <Zap className="h-4 w-4 mr-2" />
+                                ENEO
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </FloatingPanel>

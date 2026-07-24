@@ -52,10 +52,17 @@ class AddressController extends Controller
 
     public function store(StoreAddressRequest $request): JsonResponse
     {
-        $user = auth()->user();
+        try {
+            $user = auth()->user();
 
-        // Get street data from Nominatim or from request
-        $street = null;
+            \Log::info('Address creation started', [
+                'user_id' => $user->id,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]);
+
+            // Get street data from Nominatim or from request
+            $street = null;
         $streetNumber = null;
         $distanceOnStreet = null;
         $streetSide = null;
@@ -192,18 +199,29 @@ class AddressController extends Controller
             }
         });
 
-        // Load relations for response
-        $address->load('street');
+            // Load relations for response
+            $address->load('street');
 
-        return $this->success([
-            'address' => $this->formatAddress($address),
-            'domiciliation' => [
-                'id' => $domiciliation->id,
-                'name' => $domiciliation->name,
-                'role' => $domiciliation->role,
-                'isPrimary' => $domiciliation->is_primary,
-            ],
-        ], 'Address created successfully', 201);
+            \Log::info('Address created successfully', ['address_id' => $address->id]);
+
+            return $this->success([
+                'address' => $this->formatAddress($address),
+                'domiciliation' => [
+                    'id' => $domiciliation->id,
+                    'name' => $domiciliation->name,
+                    'role' => $domiciliation->role,
+                    'isPrimary' => $domiciliation->is_primary,
+                ],
+            ], 'Address created successfully', 201);
+        } catch (\Exception $e) {
+            \Log::error('Address creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+
+            return $this->error('Erreur lors de la création de l\'adresse: ' . $e->getMessage(), 500);
+        }
     }
 
     public function show(Address $address): JsonResponse
