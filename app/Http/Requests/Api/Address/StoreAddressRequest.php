@@ -43,8 +43,8 @@ class StoreAddressRequest extends FormRequest
             'streetData.address' => ['nullable', 'array'],
             'streetData.geojson' => ['nullable', 'array'],
             'streetData.boundingbox' => ['nullable', 'array'],
-            // Non-habitation fields
-            'isNonHabitation' => ['nullable', 'boolean'],
+            // Non-habitation fields (accept string "true"/"false" from mobile)
+            'isNonHabitation' => ['nullable'],
             'residentName' => ['nullable', 'string', 'max:255'],
             // Honor declaration - conditionally required
             'honorDeclaration' => [
@@ -72,7 +72,7 @@ class StoreAddressRequest extends FormRequest
             'video' => ['nullable', 'file', 'mimes:mp4,mov,avi,webm,3gp', 'mimetypes:video/mp4,video/quicktime,video/avi,video/webm,video/3gpp', 'max:50000'],
             // Domiciliation options
             'domiciliationName' => ['nullable', 'string', 'max:100'],
-            'isPrimary' => ['nullable', 'boolean'],
+            'isPrimary' => ['nullable'], // Accept string "true"/"false" from mobile
         ];
     }
 
