@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\Address;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAddressRequest extends FormRequest
@@ -9,6 +10,16 @@ class StoreAddressRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        \Log::warning('Address creation validation failed', [
+            'errors' => $validator->errors()->toArray(),
+            'input' => $this->except(['signature', 'video']), // Exclude large fields
+        ]);
+
+        parent::failedValidation($validator);
     }
 
     public function rules(): array
