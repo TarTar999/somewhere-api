@@ -626,7 +626,8 @@ class AddressController extends Controller
      */
     public function updateItinerary(Request $request, Address $address): JsonResponse
     {
-        if ($address->user_id !== auth()->id()) {
+        // Allow owner OR any domiciliated user to update itinerary
+        if (!$address->canUserAccess(auth()->id())) {
             return $this->error('Unauthorized', 403);
         }
 
@@ -677,7 +678,8 @@ class AddressController extends Controller
      */
     public function deleteItinerary(Address $address): JsonResponse
     {
-        if ($address->user_id !== auth()->id()) {
+        // Allow owner OR any domiciliated user to delete itinerary
+        if (!$address->canUserAccess(auth()->id())) {
             return $this->error('Unauthorized', 403);
         }
 

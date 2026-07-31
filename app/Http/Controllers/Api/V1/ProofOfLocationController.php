@@ -182,8 +182,8 @@ class ProofOfLocationController extends Controller
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        // Verify ownership
-        if ($address->user_id !== $user->id) {
+        // Verify ownership OR domiciliation
+        if (!$address->canUserAccess($user->id)) {
             return $this->error('Unauthorized', 403);
         }
 

@@ -91,9 +91,9 @@ class ProofOfLocationService
      */
     public function generateFreeLocationPlan(User $user, Address $address): ProofOfLocation
     {
-        // Check if user owns the address
-        if ($address->user_id !== $user->id) {
-            throw new \InvalidArgumentException('User does not own this address');
+        // Check if user owns the address OR is domiciliated there
+        if (!$address->canUserAccess($user->id)) {
+            throw new \InvalidArgumentException('User is not authorized to generate a location plan for this address');
         }
 
         // Check if user already has an active location plan for this address

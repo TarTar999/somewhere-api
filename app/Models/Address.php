@@ -162,6 +162,25 @@ class Address extends Model
             ->withTimestamps();
     }
 
+    /**
+     * Check if a user has approved domiciliation at this address
+     */
+    public function isUserDomiciliated(int $userId): bool
+    {
+        return $this->domiciliations()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
+    /**
+     * Check if a user can access this address (owner OR domiciliated)
+     */
+    public function canUserAccess(int $userId): bool
+    {
+        return $this->user_id === $userId || $this->isUserDomiciliated($userId);
+    }
+
     public function labels(): BelongsToMany
     {
         return $this->belongsToMany(Label::class, 'address_labels')
