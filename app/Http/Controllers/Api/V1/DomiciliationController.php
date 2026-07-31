@@ -225,8 +225,8 @@ class DomiciliationController extends Controller
 
         // Generate QR code
         $qrData = json_encode([
-            'type' => 'domiciliation_invitation',
-            'token' => $token,
+            'type' => 'domiciliation',
+            'invitationCode' => $token,
         ]);
 
         $qrCodeUrl = $this->qrCodeService->generate($qrData);
